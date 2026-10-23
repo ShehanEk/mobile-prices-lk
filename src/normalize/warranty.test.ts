@@ -62,3 +62,16 @@ test('warrantyOf prefers the chosen option, then the payload text, then the titl
   )
   assert.deepEqual(warrantyOf('Google Pixel 9a 128GB', { variant: {}, warrantyText: null }), { text: null, warranty: 'unstated' })
 })
+
+test('shop wording beats a phone brand name, but not a distributor or "company"', () => {
+  assert.equal(classifyWarranty('1 Year Samsung Software Warranty'), 'shop')
+  assert.equal(classifyWarranty('Google Pixel 1 Year Software'), 'shop')
+  assert.equal(classifyWarranty('1 Year Softlogic, 1 Year Software'), 'company')
+})
+
+test('warrantyOf skips a blank chosen option', () => {
+  assert.deepEqual(
+    warrantyOf('Honor X5B 4GB | 64GB', { variant: { Warranty: '  ' }, warrantyText: '1 Year Company Warranty' }),
+    { text: '1 Year Company Warranty', warranty: 'company' },
+  )
+})

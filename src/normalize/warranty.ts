@@ -12,7 +12,10 @@ import type { Warranty } from '@/db/schema'
  */
 const APPLE = /apple\s*care|apple\s+warranty/i
 const COMPANY =
-  /company|agent|authori[sz]ed|official|\b(softlogic|abans|genxt|singer|dialog|samsung|huawei|oppo|vivo|honor|xiaomi|realme|tecno|infinix|nokia|motorola|oneplus|google|zte|nothing)\b/i
+  /company|\bagent\b|authori[sz]ed|\bofficial\b|\b(softlogic|abans|genxt|singer|dialog)\b/i
+// Phone brands name the maker, so they only count once no shop wording is present.
+const BRAND =
+  /\b(samsung|huawei|oppo|vivo|honor|xiaomi|realme|tecno|infinix|nokia|motorola|oneplus|google|zte)\b/i
 const SHOP = /software|hardware|shop\s+warranty/i
 const BARE_DURATION =
   /^\s*(?:\d+|one|two|three|six|twelve|eighteen)(?:st|nd)?\s*-?\s*(?:years?|months?)\s*(?:warranty)?\s*$/i
@@ -23,6 +26,7 @@ export function classifyWarranty(text: string | null | undefined): Warranty | nu
   if (APPLE.test(t)) return 'apple'
   if (COMPANY.test(t)) return 'company'
   if (SHOP.test(t)) return 'shop'
+  if (BRAND.test(t)) return 'company'
   if (BARE_DURATION.test(t)) return 'unstated'
   return null
 }
@@ -43,7 +47,7 @@ export function warrantyOf(
   rawTitle: string,
   payload: { variant?: Record<string, string>; warrantyText?: string | null },
 ): { text: string | null; warranty: Warranty | null } {
-  const chosen = Object.entries(payload.variant ?? {}).find(([k]) => /warrant/i.test(k))?.[1]
+  const chosen = Object.entries(payload.variant ?? {}).find(([k]) => /warrant/i.test(k))?.[1]?.trim()
   const text = chosen || payload.warrantyText || rawTitle.match(TITLE_PHRASE)?.[1]?.replace(/^with\s+/i, '') || null
   return { text, warranty: classifyWarranty(text) }
 }
