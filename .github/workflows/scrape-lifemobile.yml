@@ -1,10 +1,9 @@
 name: scrape lifemobile.lk
 
-# 0 20 * * * UTC = 01:30 Sri Lanka time. Staggered so the shops are never hit at
-# once. The largest shop: about 4.5 minutes on 2026-10-24.
+# 2026-10-24: answers GitHub's runners with 403 (Cloudflare blocks data-centre
+# addresses) but works from a home connection. Manual runs only, to check
+# whether the block has lifted.
 on:
-  schedule:
-    - cron: '0 20 * * *'
   workflow_dispatch:
 
 jobs:

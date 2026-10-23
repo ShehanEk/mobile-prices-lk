@@ -7,7 +7,8 @@ Last updated 24 October 2026.
 
 ## Live
 
-- **Scraper:** six shops into `raw_listings`, run from the command line
+- **Scraper:** six shops into `raw_listings`. Nightly on GitHub for banana.lk
+  and idealz.lk; the other four from the command line
   (`npm run scrape -- all`, about 6 minutes). Not scheduled yet.
 - **First real run (2026-10-24):**
 
@@ -35,9 +36,10 @@ Last updated 24 October 2026.
 - **Reset the Neon password.** The connection string was shared in a chat
   on 2026-10-24. Reset `neondb_owner`'s password in Neon and update
   `.env.local` (and the GitHub secret once it exists).
-- **Nightly workflows** (plan Task 5): need `DATABASE_URL` as a GitHub
-  Actions secret, then one manual run per shop to see which block GitHub's
-  runners.
+- **Four shops block GitHub's runners** (lifemobile, celltronics,
+  geniusmobile, doctormobile: 403 on 2026-10-24). Only banana.lk and
+  idealz.lk run nightly on GitHub (00:45 and 01:00 Sri Lanka time). The other
+  four need a run from a home connection; see docs/retailers.md.
 - **Migrations need `pg`.** drizzle-kit falls back to
   `@neondatabase/serverless`, which needs WebSockets that Node 20 lacks, and
   then exits without applying anything. `pg` is a dev dependency for that
