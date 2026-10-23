@@ -8,6 +8,12 @@ user agent. **Not yet checked from GitHub's runners** (phase 1 task).
 All six are WordPress + WooCommerce, the Store API
 (`/wp-json/wc/store/v1/products`) answers, and robots.txt allows it.
 
+**From GitHub's runners (2026-10-24):** banana.lk and idealz.lk work.
+lifemobile.lk, celltronics.lk, geniusmobile.lk and doctormobile.lk answer the
+first request with 403 (Cloudflare turning away data-centre addresses); all
+four work from a home connection with the same bot user agent. Their
+workflows are manual-only until there is somewhere else to run them.
+
 | Shop | Phone category (term id) | robots.txt | Notes |
 |---|---|---|---|
 | lifemobile.lk | Mobile Phones (252), 1,662 | Allows all; Cloudflare content signal `search=yes, ai-train=no` | Prices carry decimals (69714.29); unresolved: check what the shown price is before launch |
