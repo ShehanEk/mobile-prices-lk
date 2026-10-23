@@ -9,7 +9,17 @@ import type { Category, ScrapeOptions, ScrapedRow, Scraper } from './types'
  * and stock. No HTML parsing.
  *
  * The Store API is the storefront's own read endpoint. No shop's robots.txt
- * disallows it (check `per_page`; see docs/status.md).
+ * disallows it (see docs/retailers.md).
+ *
+ * Request pattern, all through `politeGet`, one at a time:
+ *   1. `products?category=<id>&per_page=100&page=N`, until a short page.
+ *   2. For that page's variable products, one batched
+ *      `products?type=variation&parent=<id,id,...>&per_page=100&page=N`
+ *      (again until a short page) instead of one request per variation. The
+ *      variations come back with their own price and stock; the product's
+ *      `variations` list (via `variantGroups`) still decides the grouping.
+ *   3. A 403 or 429 on any request throws: the shop is rate-limiting or
+ *      challenging us, and we stop rather than push through it.
  */
 
 export type WooCategoryId = { id: number; label: string }
@@ -21,9 +31,8 @@ export type WooConfig = {
   categoryIds: Partial<Record<Category, WooCategoryId | WooCategoryId[]>>
   /**
    * The attribute holding the brand, for shops whose product names leave it
-   * out: tecroot.lk lists "Pro B760M-P DDR4" with "Brands: MSI" beside it. The
-   * brand is put in front of the title, because every extractor reads the
-   * brand from there.
+   * out ("Galaxy A18" with "Brand: Samsung" beside it). The brand is put in
+   * front of the title when the name does not already contain it.
    */
   brandAttribute?: string
 }
@@ -46,11 +55,9 @@ const NAMED_ENTITIES: Record<string, string> = {
 /**
  * WordPress returns product names HTML-encoded, and JSON does not decode them.
  *
- * The other scrapers get this for free because they parse markup with cheerio.
- * Here the entity survives into the title, and from there into the part id: two
- * colours of "Corsair 3200D RS ARGB Mid-Tower Case &#8211; White" both minted
- * `corsair-3200d-rs-8211-atx`, with the numeric entity sitting in the id as
- * though it were part of the model name.
+ * An HTML scraper gets this for free from its parser. Here the entity survives
+ * into the title, and from there into the product id: "Galaxy A56 &#8211; 5G"
+ * would mint an id with "8211" in it, as though it were part of the model name.
  */
 export function decodeEntities(text: string): string {
   return text
@@ -78,6 +85,9 @@ export type StoreProduct = {
     currency_code?: string
     currency_minor_unit?: number
   }
+  /** On a variation: the id of its variable product. */
+  parent?: number
+  is_purchasable?: boolean
   is_in_stock?: boolean
   is_on_backorder?: boolean
   stock_availability?: { text?: string }
@@ -119,8 +129,8 @@ function toSpecs(product: StoreProduct): Record<string, string> | undefined {
       .join(', ')
     if (label && value) specs[label] = value
   }
-  // pcbuilders consistently puts the warranty here ("3 YEARS WARRANTY"). Nothing
-  // reads it yet.
+  // Shops that put the warranty in the short description (geniusmobile.lk) are
+  // read from here by `warrantyText`; the raw text is kept as a spec too.
   const warranty = product.short_description
     ? decodeEntities(product.short_description.replace(/<[^>]*>/g, '')).trim()
     : ''
@@ -198,17 +208,54 @@ export function isNotNew(product: StoreProduct): boolean {
   return (product.categories ?? []).some((c) => NOT_NEW.test(`${c.name ?? ''} ${c.slug ?? ''}`))
 }
 
+// `is_in_stock` can be true for backordered items too ("Available on
+// backorder" while flagged in stock). Taking the flag at face value would
+// advertise same-day availability for phones that have to be ordered in.
+const onBackorder = (p: StoreProduct) =>
+  p.is_on_backorder === true || /backorder/i.test(p.stock_availability?.text ?? '')
+const buyable = (p: StoreProduct) => p.is_in_stock === true && !onBackorder(p)
+const hasPrice = (p: StoreProduct) => typeof p.prices?.price === 'string' && p.prices.price !== ''
+
+/**
+ * A parsed variation is trusted only if it is an object with a numeric id. A
+ * `null` body, or an error object such as `{ code, message }`, is not one.
+ */
+export function isUsableVariation(value: unknown): value is StoreProduct {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as { id?: unknown }).id === 'number'
+  )
+}
+
+/**
+ * The variation that prices a group: the first buyable one that has a price
+ * (colours share a price, so one is enough), else the first with a price.
+ * Null when none is usable.
+ */
+export function pickPriced(candidates: unknown[]): StoreProduct | null {
+  const priced = candidates.filter(isUsableVariation).filter(hasPrice)
+  return priced.find(buyable) ?? priced[0] ?? null
+}
+
+/** More than 10% of variable groups unpriced (judged only from 10 groups up) fails the shop. */
+export function failedGroupsExceeded(failed: number, attempted: number): boolean {
+  return attempted >= 10 && failed / attempted > 0.1
+}
+
+/**
+ * A 403 or 429 means the shop is challenging or rate-limiting us. Stop the
+ * shop (the run records a failure) rather than carry on to the next request.
+ */
+export function assertNotBlocked(shop: string, status: number, url: string): void {
+  if (status === 403 || status === 429) {
+    throw new Error(`${shop}: HTTP ${status} on ${url}, stopping (blocked or rate-limited)`)
+  }
+}
+
 export function createWooScraper(config: WooConfig): Scraper {
   const api = `${config.baseUrl}/wp-json/wc/store/v1/products`
   const categories = Object.keys(config.categoryIds) as Category[]
-
-  // `is_in_stock` is true for backordered items too — over half of
-  // pcbuilders' graphics cards are "Available on backorder" while flagged in
-  // stock. Taking the flag at face value would have advertised same-day
-  // availability for parts that have to be ordered in.
-  const onBackorder = (p: StoreProduct) =>
-    p.is_on_backorder === true || /backorder/i.test(p.stock_availability?.text ?? '')
-  const buyable = (p: StoreProduct) => p.is_in_stock === true && !onBackorder(p)
 
   /** One row: the product's identity, priced from itself or one variation. */
   function toRow(
@@ -237,6 +284,13 @@ export function createWooScraper(config: WooConfig): Scraper {
             .join(', ') || meta.label,
         externalId: String(priced.id),
         productId: String(product.id),
+        // A variable product with no variations still looks like a simple one,
+        // with a headline price that is often 0; phase 2 tells them apart here.
+        productType: product.type ?? null,
+        purchasable: priced.is_purchasable ?? null,
+        // The variation's own page link, which carries its option choices.
+        variationUrl:
+          priced.permalink && priced.permalink !== product.permalink ? priced.permalink : null,
         brand: brand ?? null,
         priceLkr,
         listPriceLkr: toRupees(priced.prices?.regular_price, priced.prices?.currency_minor_unit),
@@ -262,6 +316,48 @@ export function createWooScraper(config: WooConfig): Scraper {
       const wanted = opts.categories?.length ? opts.categories : categories
       const rows: ScrapedRow[] = []
 
+      // Variable-product groups across the whole shop, for the failure gate.
+      let attemptedGroups = 0
+      let failedGroups = 0
+
+      /** Every request goes through here: a 403 or 429 stops the shop. */
+      const get = async (url: string) => {
+        const res = await politeGet(url)
+        assertNotBlocked(config.shop, res.status, url)
+        return res
+      }
+
+      /**
+       * All variations of the given products, by id: one request per 100
+       * variations rather than one per variation. Colours are kept, since the
+       * product's own variation list says which ids belong to which group.
+       */
+      const fetchVariations = async (parentIds: number[]): Promise<Map<number, StoreProduct>> => {
+        const byId = new Map<number, StoreProduct>()
+        for (let page = 1; ; page++) {
+          const url = `${api}?type=variation&parent=${parentIds.join(',')}&per_page=${PER_PAGE}&page=${page}`
+          const res = await get(url)
+          if (res.status !== 200) {
+            log(`  HTTP ${res.status} fetching variations (page ${page}), groups left unpriced`)
+            break
+          }
+          let batch: unknown[]
+          try {
+            const parsed: unknown = JSON.parse(res.body)
+            batch = Array.isArray(parsed) ? parsed : []
+          } catch {
+            log(`  variations page ${page} was not JSON, groups left unpriced`)
+            break
+          }
+          const before = byId.size
+          for (const v of batch) if (isUsableVariation(v)) byId.set(v.id, v)
+          // A short page ends it; a page that adds nothing new guards against a
+          // server that ignores `page`.
+          if (batch.length < PER_PAGE || byId.size === before) break
+        }
+        return byId
+      }
+
       for (const category of wanted) {
         for (const meta of [config.categoryIds[category] ?? []].flat()) {
           const found: ScrapedRow[] = []
@@ -273,7 +369,7 @@ export function createWooScraper(config: WooConfig): Scraper {
           // surface, so pagination stops on a short page instead.
           while (page <= maxPages) {
             const url = `${api}?category=${meta.id}&per_page=${PER_PAGE}&page=${page}`
-            const res = await politeGet(url)
+            const res = await get(url)
             if (res.status !== 200) {
               log(`  ${category}: HTTP ${res.status} on page ${page}, stopping`)
               break
@@ -288,8 +384,19 @@ export function createWooScraper(config: WooConfig): Scraper {
               break
             }
 
+            // Pick this page's products first, so the variations of all of
+            // them can be fetched together. Stop picking once the cap is
+            // covered, so a capped run does not fetch what it will not use.
+            const picked: {
+              product: StoreProduct
+              title: string
+              specs: Record<string, string> | undefined
+              brand: string | undefined
+              groups: VariantGroup[]
+            }[] = []
+            let expectedRows = 0
             for (const product of batch) {
-              if (found.length >= cap) break
+              if (found.length + expectedRows >= cap) break
               const name = product.name ? decodeEntities(product.name).trim() : ''
               if (!name || isNotNew(product)) continue
 
@@ -297,28 +404,30 @@ export function createWooScraper(config: WooConfig): Scraper {
               const brand = config.brandAttribute ? specs?.[config.brandAttribute] : undefined
               const title =
                 brand && !name.toLowerCase().includes(brand.toLowerCase()) ? `${brand} ${name}` : name
-
               const groups = product.type === 'variable' ? variantGroups(product) : []
+              picked.push({ product, title, specs, brand, groups })
+              expectedRows += Math.max(1, groups.length)
+            }
+
+            const parentIds = picked.filter((p) => p.groups.length > 0).map((p) => p.product.id)
+            const variations = parentIds.length > 0 ? await fetchVariations(parentIds) : new Map<number, StoreProduct>()
+
+            for (const { product, title, specs, brand, groups } of picked) {
               if (groups.length === 0) {
-                found.push(toRow(product, product, title, {}, category, meta, specs, brand))
+                if (found.length < cap) found.push(toRow(product, product, title, {}, category, meta, specs, brand))
                 continue
               }
 
               for (const group of groups) {
                 if (found.length >= cap) break
-                let priced: StoreProduct | null = null
-                for (const id of group.variationIds) {
-                  const res = await politeGet(`${api}/${id}`)
-                  if (res.status !== 200) continue
-                  try {
-                    priced = JSON.parse(res.body) as StoreProduct
-                  } catch {
-                    continue
-                  }
-                  // One buyable colour is enough: colours share a price.
-                  if (buyable(priced)) break
+                attemptedGroups++
+                const priced = pickPriced(group.variationIds.map((id) => variations.get(id)))
+                if (!priced) {
+                  failedGroups++
+                  log(`  ${config.shop}: no usable variation for "${title}" ${JSON.stringify(group.attrs)}`)
+                  continue
                 }
-                if (priced) found.push(toRow(product, priced, title, group.attrs, category, meta, specs, brand))
+                found.push(toRow(product, priced, title, group.attrs, category, meta, specs, brand))
               }
             }
 
@@ -329,6 +438,12 @@ export function createWooScraper(config: WooConfig): Scraper {
           rows.push(...found)
           log(`  ${category} (${meta.label}): ${found.length} rows`)
         }
+      }
+
+      if (failedGroupsExceeded(failedGroups, attemptedGroups)) {
+        throw new Error(
+          `${config.shop}: ${failedGroups} of ${attemptedGroups} variable groups had no usable variation (over 10%), failing the shop`,
+        )
       }
 
       return rows
