@@ -19,13 +19,17 @@ All six are WordPress + WooCommerce, the Store API
 
 ### First full run (2026-10-24)
 
-Dry run, no database, one shop at a time. celltronics.lk and lifemobile.lk are
-added separately.
+Dry run, no database, one shop at a time, with variations fetched in batches
+by parent (`type=variation&parent=…`). Times before batching in brackets.
 
+- lifemobile.lk: 2,439 rows, 2,344 with a price, 240 s.
+- celltronics.lk: 451 rows, 429 with a price, 50 s (1,555 s).
 - geniusmobile.lk: 358 rows, 358 with a price, 5.4 s.
-- banana.lk: 123 rows, 122 with a price, 183.4 s. Zero price: Samsung Galaxy S25 Ultra (12GB RAM 256GB).
-- idealz.lk: 52 rows, 37 with a price, 188.1 s. 15 rows price 0: models the shop lists with no price yet (iPhone 18 Pro / Pro Max, Galaxy Z Fold 8, Xiaomi 17T, S26 Ultra, a few budget Redmi/Samsung/Blackview).
-- doctormobile.lk: 27 rows, 27 with a price, 55.8 s.
+- banana.lk: 123 rows, 122 with a price, 7.4 s (183 s). Zero price: Samsung Galaxy S25 Ultra (12GB RAM 256GB).
+- idealz.lk: 52 rows, 37 with a price, 7.4 s (188 s). 15 rows have Store API price 0 (iPhone 18 Pro / Pro Max, Galaxy Z Fold 8, Xiaomi 17T, S26 Ultra, a few budget Redmi/Samsung/Blackview).
+- doctormobile.lk: 27 rows, 27 with a price, 5.6 s (56 s).
+
+All six together take about 5 minutes a night.
 
 ## Later (phase 2)
 
