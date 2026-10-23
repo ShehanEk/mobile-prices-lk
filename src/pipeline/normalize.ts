@@ -1,4 +1,4 @@
-import { inArray, isNull, sql } from 'drizzle-orm'
+import { desc, inArray, isNull, sql } from 'drizzle-orm'
 
 import { getDb } from '@/db'
 import { listings, phones, priceHistory, rawListings } from '@/db/schema'
@@ -6,6 +6,8 @@ import type { Warranty } from '@/db/schema'
 import { extractPhone } from '@/normalize/phone'
 import type { PhoneDrop, PhoneIdentity } from '@/normalize/phone'
 import { warrantyOf } from '@/normalize/warranty'
+
+import { betterForListing, betterWithinDay, colomboDate } from './best-row'
 
 /**
  * Stage 3 of the pipeline: turn `raw_listings` into `phones`, current
@@ -78,23 +80,12 @@ type Candidate = {
   scrapedAt: Date
 }
 
-/**
- * Which of two rows for the same key to keep, as a positive number when `b`
- * beats `a`.
- *
- * In stock wins before cheapest. Cheapest alone reads as obviously right until
- * a shop carries the same phone twice, once buyable and once not: it would
- * advertise a price you cannot pay. Ties go to the more recent scrape.
- */
-function better(a: Candidate, b: Candidate): number {
-  return (
-    Number(b.inStock) - Number(a.inStock) ||
-    a.priceLkr - b.priceLkr ||
-    b.scrapedAt.getTime() - a.scrapedAt.getTime()
-  )
-}
-
-function keepBest(map: Map<string, Candidate>, key: string, c: Candidate) {
+function keepBest(
+  map: Map<string, Candidate>,
+  key: string,
+  c: Candidate,
+  better: (a: Candidate, b: Candidate) => number,
+) {
   const existing = map.get(key)
   if (!existing || better(existing, c) > 0) map.set(key, c)
 }
@@ -107,7 +98,9 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
     .select()
     .from(rawListings)
     .where(opts.redo ? sql`true` : isNull(rawListings.normalizedAt))
-    .orderBy(rawListings.scrapedAt, rawListings.id)
+    // A plain run takes the oldest unprocessed rows first, so repeated runs drain
+    // a backlog. --redo sees every row, so a limit must keep the newest ones.
+    .orderBy(...(opts.redo ? [desc(rawListings.scrapedAt), desc(rawListings.id)] : [rawListings.scrapedAt, rawListings.id]))
     .limit(opts.limit ?? 20000)
 
   const result: NormalizeResult = {
@@ -132,7 +125,7 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
   )
   const newPhones = new Map<string, PhoneIdentity>()
   // One best row per (phone, shop, warranty) for the current listing, and per
-  // (phone, shop, warranty, day) for history, so a backlog lands on its own days.
+  // (phone, shop, warranty, Colombo day) for history, so a backlog lands on its own days.
   const bestListing = new Map<string, Candidate>()
   const bestHistory = new Map<string, Candidate>()
 
@@ -190,8 +183,8 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
       scrapedAt: row.scrapedAt,
     }
     const key = [candidate.phoneId, candidate.shop, candidate.warranty].join('\u0000')
-    keepBest(bestListing, key, candidate)
-    keepBest(bestHistory, `${key}\u0000${row.scrapedAt.toISOString().slice(0, 10)}`, candidate)
+    keepBest(bestListing, key, candidate, betterForListing)
+    keepBest(bestHistory, `${key}\u0000${colomboDate(row.scrapedAt)}`, candidate, betterWithinDay)
   }
 
   result.phonesCreated = newPhones.size
@@ -266,7 +259,7 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
     phoneId: c.phoneId,
     shop: c.shop,
     warranty: c.warranty,
-    recordedOn: c.scrapedAt.toISOString().slice(0, 10),
+    recordedOn: colomboDate(c.scrapedAt),
     priceLkr: String(c.priceLkr),
     // Stock is stored with the point; it cannot be looked up afterwards.
     inStock: c.inStock,

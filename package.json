@@ -5,7 +5,7 @@
   "scripts": {
     "scrape": "tsx --env-file-if-exists=.env.local scripts/scrape.ts",
     "normalize": "tsx --env-file-if-exists=.env.local scripts/normalize.ts",
-    "test": "tsx --test src/scrapers/woocommerce.test.ts src/normalize/warranty.test.ts src/normalize/phone.test.ts",
+    "test": "tsx --test src/scrapers/woocommerce.test.ts src/normalize/warranty.test.ts src/normalize/phone.test.ts src/pipeline/best-row.test.ts",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
