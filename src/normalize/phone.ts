@@ -46,6 +46,10 @@ const DUAL_NETWORK = [
   'redmi note 12 pro', 'redmi note 13 pro', 'redmi note 14', 'redmi note 14 pro',
   'redmi note 15', 'redmi 15', 'redmi 15c', 'galaxy a07', 'galaxy a14',
   'galaxy m14', 'tecno camon 50 pro',
+  // Fix round 1: a 4G title without its token ("Xiaomi Redmi Note 10 4GB RAM,
+  // 128GB") merged with the 5G one at a >35% price gap.
+  'redmi note 10', 'xiaomi 11 lite', 'galaxy m32', 'galaxy a13', 'galaxy a22',
+  'poco m4 pro', 'redmi note 11 pro', 'pixel 4a',
 ]
 
 /**
@@ -77,8 +81,14 @@ function clean(text: string): string {
 /** Rule 2. "iPhone 13 128GB (Used)". */
 const USED = /(?<![a-z])(?:used|refurb\w*|pre-?owned|open\s+box)(?![a-z])/i
 
-/** Rule 2. "Samsung Galaxy Tab S6 Lite", "Honor Pad X9a": not phones. */
-const NOT_A_PHONE = /\b(?:tab|tablet|ipad|matepad|pad|watch|buds|band)\b/i
+/**
+ * Rule 2. "Samsung Galaxy Tab S6 Lite", "Honor Pad X9a", "Apple MacBook Air
+ * M2": not phones. Only the part before "with" is checked: "Honor 400 Pro 5G
+ * 12GB RAM 512GB With Buds" is a phone sold with earbuds.
+ */
+const NOT_A_PHONE =
+  /\b(?:tab|tablet|ipad|matepad|pad|watch|buds|band|macbook|matebook|magicbook|galaxy\s+book|laptop|notebook)\b/i
+const isNotAPhone = (title: string) => NOT_A_PHONE.test(title.split(/\bwith\b/i)[0])
 
 /**
  * Rule 3. A leading brand word, including the typo shops ship ("Xiaom"). Not
@@ -137,12 +147,22 @@ const STORAGE_SIZES = new Set([16, 32, 64, 128, 256, 512, 1024, 2048])
 const SEPARATOR = '[⎢|/–—,(-]'
 
 /**
+ * A memory pair "N+M": "8+8GB", "Spark Go 1 3+3GB", "Smart 8 3 +3GB",
+ * "Blade V50 Design 4 + 10GB", and "Tecno Spark 20 8+ 8GB", "Spark 30 4G 8+
+ * 8GB", "Spark 30C 5G 4+ 4GB" (the plus glued on the left, but the number
+ * before it follows a token with a digit in it). Not "Samsung Galaxy Note 10+
+ * 12GB" or "realme 12+ 5G": a number glued to "+" with a space after,
+ * straight after a plain word, is the model's "+".
+ */
+const PLUS_PAIR = '(?<![a-z0-9])(\\d+)(?:\\s*\\+(?=\\d)|\\s+\\+\\s*|(?<=\\d[a-z]*\\s+\\d+)\\+\\s+)(\\d+)'
+
+/**
  * Where the name ends and memory begins: a size with a unit, a "6+128" pair,
  * or a bare size after a separator — the same three shapes parseMemory reads,
  * so the model cut and the memory scan agree on what counts as memory.
  */
 const MEMORY_START = new RegExp(
-  `(?<![a-z0-9])\\d+\\s*(?:gb|tb)(?![a-z])|(?<![a-z0-9])\\d+\\s*\\+\\s*\\d+|${SEPARATOR}\\s*(?:16|32|64|128|256|512)(?![0-9a-z.])`,
+  `(?<![a-z0-9])\\d+\\s*(?:gb|tb)(?![a-z])|${PLUS_PAIR}|${SEPARATOR}\\s*(?:16|32|64|128|256|512)(?![0-9a-z.])`,
   'i',
 )
 
@@ -170,13 +190,13 @@ export function parseMemory(title: string): { ramGb: number | null; storageGb: n
   for (const m of t.matchAll(new RegExp(`${SEPARATOR}\\s*(16|32|64|128|256|512)(?![0-9a-z.])`, 'gi'))) {
     sizes.push(Number(m[1]))
   }
-  const pair = t.match(/(?<![a-z0-9])(\d+)\s*\+\s*(\d+)(?![0-9])/i)
+  const pair = t.match(new RegExp(`${PLUS_PAIR}(?![0-9])`, 'i'))
   if (pair) sizes.push(Number(pair[2]))
   const storage = sizes.filter((n) => STORAGE_SIZES.has(n))
   const storageGb = storage.length ? Math.max(...storage) : null
 
   const rams: string[] = []
-  const virtual = t.match(/(?<![a-z0-9])(\d+)\s*\+\s*\d+\s*gb/i)
+  const virtual = t.match(new RegExp(`${PLUS_PAIR}\\s*gb`, 'i'))
   if (virtual) rams.push(virtual[1])
   for (const m of t.matchAll(/(?<![a-z0-9])(\d+)\s*gb\s*(?:ram)?\s*[|⎢/+\-–]?\s*(\d+)\s*(?:gb|tb)/gi)) rams.push(m[1])
   if (pair) rams.push(pair[1])
@@ -223,8 +243,14 @@ const NOISE: RegExp[] = [
  * 12 Purple – Genxt Warranty 128GB", "Apple iPhone 7 RED", "Apple iPhone 8
  * Product (RED)". Anchored to the end, so "nubia Red Magic" keeps its name.
  */
-const TRAILING_COLOUR =
-  /\s+(?:\(?product\)?\s*)?\(?(?:red|purple|black|white|blue|green|gold|silver|pink|yellow|graphite|midnight|starlight)\)?$/i
+const COLOURS = 'red|purple|black|white|blue|green|gold|silver|pink|yellow|graphite|midnight|starlight|gr[ae]y'
+const TRAILING_COLOUR = new RegExp(`\\s+(?:\\(?product\\)?\\s*)?\\(?(?:${COLOURS})\\)?$`, 'i')
+
+/**
+ * "OnePlus 6 -Mirror Black": a dash and words ending in a colour. Words that
+ * are not a colour stay: "Infinix Note 40 Pro -Racing Edition" is its own phone.
+ */
+const DASH_COLOUR = new RegExp(`\\s-\\s*(?:[a-z]+\\s+)*(?:${COLOURS})\\s*$`, 'i')
 
 /** Canonical case for family words shops write in any case: "REDMI 15", "Apple iphone 18 pro". */
 const FAMILY_CASE: Record<string, string> = {
@@ -273,7 +299,7 @@ function normaliseModel(brand: string, model: string): string {
 export function extractPhone(rawTitle: string): PhoneIdentity | PhoneDrop {
   const title = clean(rawTitle)
   if (USED.test(title)) return { drop: 'used' }
-  if (NOT_A_PHONE.test(title)) return { drop: 'not-a-phone' }
+  if (isNotAPhone(title)) return { drop: 'not-a-phone' }
   const found = findBrand(title)
   if (!found) return { drop: 'brand' }
   const { brand } = found
@@ -299,8 +325,8 @@ export function extractPhone(rawTitle: string): PhoneIdentity | PhoneDrop {
   const network = (model.match(NETWORK) ?? title.match(NETWORK))?.[1]?.toUpperCase()
   model = model.replace(new RegExp(NETWORK.source, 'gi'), ' ')
   model = model
-    // "OnePlus 6 -Mirror Black": a trailing colour after a dash.
-    .replace(/\s-\s*[a-z][a-z ]*$/i, ' ')
+    .replace(DASH_COLOUR, ' ')
+    .replace(/\s-\s*/g, ' ')
     .replace(/\(\s*\)/g, ' ')
     .replace(/\s+/g, ' ')
     .replace(/^[\s\-–,:;/()]+|[\s\-–,:;/(]+$/g, '')

@@ -65,6 +65,34 @@ const ids: [string, string][] = [
   ['Xiaomi Redmi Note 15 4G 8GB RAM 256GB', 'xiaomi-redmi-note-15-4g-8gb-256gb'],
   ['Xiaomi Redmi Note 15 5G 8GB RAM 256GB', 'xiaomi-redmi-note-15-5g-8gb-256gb'],
   ['Tecno Camon 50 Pro 8GB RAM 256GB 5G', 'tecno-camon-50-pro-5g-8gb-256gb'],
+  // Fix round 1, I1: a token-less 4G title must not merge with the 5G version.
+  ['Xiaomi Redmi Note 10 4GB RAM, 128GB', 'xiaomi-redmi-note-10-4gb-128gb'],
+  ['Xiaomi Redmi Note 10 5G 4GB RAM 128GB', 'xiaomi-redmi-note-10-5g-4gb-128gb'],
+  ['Xiaomi Mi 11 Lite 6GB RAM, 128GB', 'xiaomi-11-lite-6gb-128gb'],
+  ['Xiaomi Mi 11 Lite 5G 6GB RAM 128GB', 'xiaomi-11-lite-5g-6gb-128gb'],
+  ['Samsung Galaxy M32 6GB RAM 128GB', 'samsung-galaxy-m32-6gb-128gb'],
+  ['Samsung Galaxy M32 5G 6GB RAM 128GB', 'samsung-galaxy-m32-5g-6gb-128gb'],
+  ['Samsung Galaxy A13 4GB RAM 64GB', 'samsung-galaxy-a13-4gb-64gb'],
+  ['Samsung Galaxy A13 5G 4GB RAM 64GB', 'samsung-galaxy-a13-5g-4gb-64gb'],
+  ['Samsung Galaxy A22 6GB RAM 128GB', 'samsung-galaxy-a22-6gb-128gb'],
+  ['Samsung Galaxy A22 5G 6GB RAM 128GB', 'samsung-galaxy-a22-5g-6gb-128gb'],
+  ['Xiaomi Poco M4 Pro 6GB RAM 128GB', 'xiaomi-poco-m4-pro-6gb-128gb'],
+  ['Xiaomi Poco M4 Pro 5G 6GB RAM 128GB', 'xiaomi-poco-m4-pro-5g-6gb-128gb'],
+  ['Xiaomi Redmi Note 11 Pro 6GB RAM 128GB', 'xiaomi-redmi-note-11-pro-6gb-128gb'],
+  ['Xiaomi Redmi Note 11 Pro 5G 6GB RAM 128GB', 'xiaomi-redmi-note-11-pro-5g-6gb-128gb'],
+  ['Google Pixel 4a 6GB RAM, 128GB', 'google-pixel-4a-6gb-128gb'],
+  ['Google Pixel 4a 5G 6GB RAM, 128GB', 'google-pixel-4a-5g-6gb-128gb'],
+  // I2: "N+" is part of the model name unless it is virtual RAM.
+  ['Samsung Galaxy Note 10+ 12GB RAM 256GB', 'samsung-galaxy-note-10-plus-12gb-256gb'],
+  ['realme 12+ 5G 8GB 256GB', 'realme-12-plus-8gb-256gb'],
+  ['Tecno Spark 20 8+ 8GB RAM 256GB', 'tecno-spark-20-8gb-256gb'],
+  ['Tecno Spark 30 4G 8+ 8GB RAM 128GB', 'tecno-spark-30-8gb-128gb'],
+  ['Tecno Spark 30C 5G 4+ 4GB RAM 128GB', 'tecno-spark-30c-4gb-128gb'],
+  ['ZTE Blade V50 Design 4 + 10GB RAM 256GB', 'zte-blade-v50-design-4gb-256gb'],
+  // M1: an accessory after "with" does not make the title not a phone.
+  ['Honor 400 Pro 5G 12GB RAM 512GB With Buds', 'honor-400-pro-12gb-512gb'],
+  // M3: a dash before non-colour words is part of the name.
+  ['Infinix Note 40 Pro -Racing Edition 8GB 256GB', 'infinix-note-40-pro-racing-edition-8gb-256gb'],
 ]
 for (const [title, id] of ids) {
   test(`id: ${title}`, () => {
@@ -87,6 +115,8 @@ const drops: [string, string][] = [
   ['iPhone 13 128GB (Used)', 'used'],
   // Ruling 6: Hono is its own feature-phone brand, not a typo for Honor.
   ['Hono H1 Plus', 'brand'],
+  // M2: laptops share shelves with phones.
+  ['Apple MacBook Air M2 8GB 256GB', 'not-a-phone'],
 ]
 for (const [title, reason] of drops) {
   test(`drop ${reason}: ${title}`, () => {
@@ -111,6 +141,8 @@ const memory: [string, { ramGb: number | null; storageGb: number | null }][] = [
   ['Apple iPhone 16 Pro Max (E-Sim) 1TB with Apple Care', { ramGb: null, storageGb: 1024 }],
   ['OnePlus 6 128GB -Mirror Black 8GB RAM', { ramGb: 8, storageGb: 128 }],
   ['Samsung Galaxy S24 Ultra (12GB RAM512GB)', { ramGb: 12, storageGb: 512 }],
+  ['Samsung Galaxy Note 10+ 12GB RAM 256GB', { ramGb: 12, storageGb: 256 }],
+  ['Tecno Spark 20 8+ 8GB RAM 256GB', { ramGb: 8, storageGb: 256 }],
 ]
 for (const [title, expected] of memory) {
   test(`memory: ${title}`, () => {
