@@ -1,6 +1,19 @@
+import { banana } from './banana'
+import { celltronics } from './celltronics'
+import { doctormobile } from './doctormobile'
+import { geniusmobile } from './geniusmobile'
+import { idealz } from './idealz'
+import { lifemobile } from './lifemobile'
 import type { Scraper } from './types'
 
-export const scrapers: Record<string, Scraper> = {}
+export const scrapers: Record<string, Scraper> = {
+  'lifemobile.lk': lifemobile,
+  'celltronics.lk': celltronics,
+  'geniusmobile.lk': geniusmobile,
+  'banana.lk': banana,
+  'idealz.lk': idealz,
+  'doctormobile.lk': doctormobile,
+}
 
 export const shopKeys = Object.keys(scrapers)
 

@@ -17,6 +17,16 @@ All six are WordPress + WooCommerce, the Store API
 | idealz.lk | Smartphones (47), 27 | Allows all | Variable iPhones show price 0 on the product; per-variation prices needed |
 | doctormobile.lk | Mobile Phones (4103), 19 | Allows all | `Capacity` attribute "8GB / 256GB"; pre-owned sub-category 7188 must be skipped |
 
+### First full run (2026-10-24)
+
+Dry run, no database, one shop at a time. celltronics.lk and lifemobile.lk are
+added separately.
+
+- geniusmobile.lk: 358 rows, 358 with a price, 5.4 s.
+- banana.lk: 123 rows, 122 with a price, 183.4 s. Zero price: Samsung Galaxy S25 Ultra (12GB RAM 256GB).
+- idealz.lk: 52 rows, 37 with a price, 188.1 s. 15 rows price 0: models the shop lists with no price yet (iPhone 18 Pro / Pro Max, Galaxy Z Fold 8, Xiaomi 17T, S26 Ultra, a few budget Redmi/Samsung/Blackview).
+- doctormobile.lk: 27 rows, 27 with a price, 55.8 s.
+
 ## Later (phase 2)
 
 | Shop | Why later |
