@@ -12,7 +12,8 @@ All six are WordPress + WooCommerce, the Store API
 lifemobile.lk, celltronics.lk, geniusmobile.lk and doctormobile.lk answer the
 first request with 403 (Cloudflare turning away data-centre addresses); all
 four work from a home connection with the same bot user agent. Their
-workflows are manual-only until there is somewhere else to run them.
+workflows are manual-only; they run nightly from Shehan's PC instead
+(`scripts/nightly-home.cmd`, see docs/status.md).
 
 | Shop | Phone category (term id) | robots.txt | Notes |
 |---|---|---|---|

@@ -7,9 +7,12 @@ Last updated 24 October 2026.
 
 ## Live
 
-- **Scraper:** six shops into `raw_listings`. Nightly on GitHub for banana.lk
-  and idealz.lk; the other four from the command line
-  (`npm run scrape -- all`, about 6 minutes). Not scheduled yet.
+- **Scraper:** six shops into `raw_listings`, nightly.
+  - banana.lk and idealz.lk on GitHub Actions (00:45 and 01:00 Sri Lanka time).
+  - lifemobile, celltronics, geniusmobile and doctormobile from Shehan's PC:
+    Windows scheduled task "MobilePrices nightly scrape" runs
+    `scripts/nightly-home.cmd` at 01:30, wakes the PC from sleep, and catches
+    up after a missed night. Logs in `logs/nightly-<date>.log`.
 - **First real run (2026-10-24):**
 
   | Shop | Rows | With a price | Time |
@@ -39,7 +42,7 @@ Last updated 24 October 2026.
 - **Four shops block GitHub's runners** (lifemobile, celltronics,
   geniusmobile, doctormobile: 403 on 2026-10-24). Only banana.lk and
   idealz.lk run nightly on GitHub (00:45 and 01:00 Sri Lanka time). The other
-  four need a run from a home connection; see docs/retailers.md.
+  four run from Shehan's PC (above); if the PC is off, they go stale.
 - **Migrations need `pg`.** drizzle-kit falls back to
   `@neondatabase/serverless`, which needs WebSockets that Node 20 lacks, and
   then exits without applying anything. `pg` is a dev dependency for that
