@@ -13,7 +13,7 @@ import type { Category } from '@/scrapers/types'
  * CLI for the scrape stage.
  *
  *   npm run scrape -- all
- *   npm run scrape -- nanotek.lk --categories gpu,psu
+ *   npm run scrape -- lifemobile.lk --categories phones
  *   npm run scrape -- gamestreet.lk --dry-run --max-products 5
  *
  * Loops `runScraper` per shop rather than calling `runScrapers`, because each
@@ -29,7 +29,7 @@ async function main() {
 
   if (!target || target.startsWith('--')) {
     console.error(
-      'usage: npm run scrape -- <shop|all> [--categories gpu,psu] [--dry-run] [--max-products N] [--max-pages N]',
+      'usage: npm run scrape -- <shop|all> [--categories phones] [--dry-run] [--max-products N] [--max-pages N]',
     )
     console.error(`shops: ${shopKeys.join(', ')}`)
     process.exit(1)

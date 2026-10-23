@@ -18,7 +18,7 @@ type NormalizeResult = Record<string, unknown>
  *
  * The row doubles as a lease: `startRun` inserts `status='running'` *before* the
  * work begins, and a partial unique index rejects a second concurrent run of the
- * same shop. See the index in `drizzle/0003_*.sql`.
+ * same shop. See the index in `drizzle/0000_*.sql`.
  */
 
 export type Actor = 'ci' | 'desktop' | 'cli'
@@ -153,8 +153,9 @@ export async function finishRun(
  * Release leases from runs that died without closing their row — a power cut,
  * a killed process, a crashed runner.
  *
- * Three hours is comfortably past the longest real job: nanotek's CI timeout is
- * 90 minutes. Without this, one hard kill would block a shop forever.
+ * Three hours is comfortably past the longest real job: lifemobile.lk, the
+ * biggest shop, is planned at a 90-minute CI timeout. Without this, one hard
+ * kill would block a shop forever.
  */
 export async function reapStaleRuns(olderThanHours = 3): Promise<number> {
   if (!process.env.DATABASE_URL) return 0
