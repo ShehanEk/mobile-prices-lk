@@ -1,0 +1,24 @@
+{
+  "name": "mobileprices-lk",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "scrape": "tsx --env-file-if-exists=.env.local scripts/scrape.ts",
+    "test": "tsx --test src/scrapers/woocommerce.test.ts",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "drizzle-orm": "^0.45.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.31.10",
+    "pg": "^8.23.1",
+    "tsx": "^4.23.12",
+    "typescript": "^5"
+  }
+}
