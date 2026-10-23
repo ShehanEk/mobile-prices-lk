@@ -77,17 +77,32 @@ export function selectCandidates(
 export const DECLINE_TTL_MS = 7 * 86_400_000
 
 /**
- * Ruling 3. An accepted (non-null, high-confidence) answer is reused forever;
- * a decline, including a low-confidence answer, only for 7 days, so a phone
- * added to the catalogue since can still be matched.
+ * Ruling 3. An accepted (non-null, high-confidence) answer is reused forever,
+ * as long as it is still on offer (`answerUsable`: a title's phone still among
+ * its candidates); otherwise the text is asked again. A decline, including a
+ * low-confidence answer, is reused only for 7 days, so a phone added to the
+ * catalogue since can still be matched.
  */
 export function cacheUse(
   decision: { answer: string | null; confidence: string; decidedAt: Date } | undefined,
   now: Date,
+  answerUsable = true,
 ): 'reuse' | 'ask' {
   if (!decision) return 'ask'
-  if (decision.answer !== null && decision.confidence === 'high') return 'reuse'
+  if (decision.answer !== null && decision.confidence === 'high') return answerUsable ? 'reuse' : 'ask'
   return now.getTime() - decision.decidedAt.getTime() < DECLINE_TTL_MS ? 'reuse' : 'ask'
+}
+
+/** Longest `model_decisions.input` stored, so a long text stays under the btree index limit. */
+export const MAX_INPUT_CHARS = 1000
+
+/**
+ * The decision key for a text: the first 1,000 characters, counted in code
+ * points so a character is never split. Used for both lookup and insert.
+ */
+export function capInput(input: string): string {
+  const chars = [...input]
+  return chars.length > MAX_INPUT_CHARS ? chars.slice(0, MAX_INPUT_CHARS).join('') : input
 }
 
 /** Claude Haiku 5.5: $0.10 per 1M input tokens, $0.50 per 1M output tokens. */

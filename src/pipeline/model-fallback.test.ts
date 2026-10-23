@@ -4,6 +4,7 @@ import { test } from 'node:test'
 import {
   brandsIn,
   cacheUse,
+  capInput,
   estimateCostUsd,
   selectCandidates,
   titleEligible,
@@ -106,6 +107,24 @@ test('ruling 3: a decline is reused for 7 days, then asked again', () => {
 test('ruling 3: a low-confidence answer counts as a decline', () => {
   assert.equal(cacheUse({ answer: 'x', confidence: 'low', decidedAt: daysAgo(1) }, now), 'reuse')
   assert.equal(cacheUse({ answer: 'x', confidence: 'low', decidedAt: daysAgo(8) }, now), 'ask')
+})
+
+test('ruling 3: an accepted id no longer on offer is asked again', () => {
+  const d = { answer: 'gone-phone', confidence: 'high', decidedAt: daysAgo(1) }
+  assert.equal(cacheUse(d, now, false), 'ask')
+  assert.equal(cacheUse(d, now, true), 'reuse')
+  // A decline has no id to check, so the flag does not apply.
+  assert.equal(cacheUse({ answer: null, confidence: 'low', decidedAt: daysAgo(1) }, now, false), 'reuse')
+})
+
+test('decision input is capped at 1,000 characters', () => {
+  assert.equal(capInput('short'), 'short')
+  assert.equal(capInput('x'.repeat(1000)), 'x'.repeat(1000))
+  assert.equal(capInput('x'.repeat(5000)), 'x'.repeat(1000))
+  // Counted in code points, so an emoji is never cut in half.
+  const emoji = '📱'.repeat(1200)
+  assert.equal([...capInput(emoji)].length, 1000)
+  assert.equal(capInput(emoji), '📱'.repeat(1000))
 })
 
 test('cost: Haiku 5.5 at $0.10 / $0.50 per 1M tokens', () => {

@@ -7,6 +7,9 @@ const cases: [string | null, string | null][] = [
   ['1 Year Company Warranty', 'company'],
   ['1 Year Softlogic', 'company'],
   ['1 Year Genxt Company', 'company'],
+  // "Gnext" is how several shops misspell GenXT.
+  ['1 Year Gnext Warranty', 'company'],
+  ['1 Year Gnext Warranty 2nd Year Celltronics Software Warranty', 'company'],
   ['1 Year Abans', 'company'],
   ['1 Year Huawei', 'company'],
   ['2 Year Oppo Company', 'company'],

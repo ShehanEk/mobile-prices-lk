@@ -10,7 +10,7 @@ import type { PhoneIdentity } from '@/normalize/phone'
 import { warrantyOf } from '@/normalize/warranty'
 
 import { betterForListing, betterWithinDay, colomboDate } from './best-row'
-import { cacheUse, estimateCostUsd, selectCandidates, titleEligible } from './model-fallback'
+import { cacheUse, capInput, estimateCostUsd, selectCandidates, titleEligible } from './model-fallback'
 
 /**
  * Stage 3 of the pipeline: turn `raw_listings` into `phones`, current
@@ -28,6 +28,8 @@ import { cacheUse, estimateCostUsd, selectCandidates, titleEligible } from './mo
 const MIN_PLAUSIBLE_PRICE_LKR = 1000
 
 const DEFAULT_MAX_MODEL_CALLS = 300
+
+const isWarranty = (v: string): v is Warranty => (warrantyEnum.enumValues as readonly string[]).includes(v)
 
 export type NormalizeOptions = {
   limit?: number
@@ -148,16 +150,19 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
   /**
    * The stored answer when it may be reused (ruling 3), otherwise one call,
    * stored. Null when no answer can be had this run (budget spent or the API
-   * failing): the row is left for the next run.
+   * failing): the row is left for the next run. `usable` says whether a stored
+   * answer is still on offer; one that is not is asked again.
    */
   const decide = async <T extends string>(
     kind: 'title' | 'warranty',
-    input: string,
+    fullInput: string,
     call: () => Promise<AiAnswer<T>>,
+    usable: (answer: string) => boolean,
   ): Promise<(Decision & { fresh: boolean }) | null> => {
+    const input = capInput(fullInput)
     const key = `${kind}\u0000${input}`
     const cached = decisions.get(key)
-    if (cached && cacheUse(cached, now) === 'reuse') {
+    if (cached && cacheUse(cached, now, cached.answer === null || usable(cached.answer)) === 'reuse') {
       cacheHits++
       return { ...cached, fresh: false }
     }
@@ -167,7 +172,7 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
     tokens.input += a.usage.inputTokens
     tokens.output += a.usage.outputTokens
     if (a.failed) {
-      // Not stored: a failed call is not a decline. Stop asking this run; the
+      // Not stored: an API failure is not a decline. Stop asking this run; the
       // rows are retried next run.
       log(`  model call failed, no more calls this run: ${a.reason}`)
       aiStopped = true
@@ -203,8 +208,11 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
           ? selectCandidates(row.rawTitle, pool.values())
           : []
       if (candidates.length) {
-        const d = await decide('title', `${row.shop}\u0000${row.rawTitle}`, () =>
-          matchTitle(row.rawTitle, candidates),
+        const d = await decide(
+          'title',
+          `${row.shop}\u0000${row.rawTitle}`,
+          () => matchTitle(row.rawTitle, candidates),
+          (id) => candidates.some((c) => c.phoneId === id),
         )
         if (!d) {
           deferred.add(row.id)
@@ -246,12 +254,12 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
       result.warrantyUnclear++
       const text = w.text
       if (useAi && text) {
-        const d = await decide('warranty', text, () => classifyWarrantyText(text))
+        const d = await decide('warranty', text, () => classifyWarrantyText(text), isWarranty)
         if (!d) {
           deferred.add(row.id)
           continue
         }
-        const answer = warrantyEnum.enumValues.find((v) => v === d.answer)
+        const answer = d.answer !== null && isWarranty(d.answer) ? d.answer : undefined
         // A decline or a low-confidence answer files the row as `unstated`.
         if (answer && d.confidence === 'high') {
           warranty = answer

@@ -12,7 +12,7 @@ import type { Warranty } from '@/db/schema'
  */
 const APPLE = /apple\s*care|apple\s+warranty/i
 const COMPANY =
-  /company|\bagent\b|authori[sz]ed|\bofficial\b|\b(softlogic|abans|genxt|singer|dialog)\b/i
+  /company|\bagent\b|authori[sz]ed|\bofficial\b|\b(softlogic|abans|genxt|gnext|singer|dialog)\b/i
 // Phone brands name the maker, so they only count once no shop wording is present.
 const BRAND =
   /\b(samsung|huawei|oppo|vivo|honor|xiaomi|realme|tecno|infinix|nokia|motorola|oneplus|google|zte)\b/i
