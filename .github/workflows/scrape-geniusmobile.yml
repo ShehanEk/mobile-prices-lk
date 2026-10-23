@@ -1,0 +1,16 @@
+name: scrape geniusmobile.lk
+
+# 0 19 * * * UTC = 00:30 Sri Lanka time. Staggered so the shops are never hit at
+# once. About 10 seconds on 2026-10-24.
+on:
+  schedule:
+    - cron: '0 19 * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    uses: ./.github/workflows/scrape.yml
+    with:
+      shop: geniusmobile.lk
+      timeout_minutes: 10
+    secrets: inherit

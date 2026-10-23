@@ -1,0 +1,16 @@
+name: scrape lifemobile.lk
+
+# 0 20 * * * UTC = 01:30 Sri Lanka time. Staggered so the shops are never hit at
+# once. The largest shop: about 4.5 minutes on 2026-10-24.
+on:
+  schedule:
+    - cron: '0 20 * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    uses: ./.github/workflows/scrape.yml
+    with:
+      shop: lifemobile.lk
+      timeout_minutes: 20
+    secrets: inherit

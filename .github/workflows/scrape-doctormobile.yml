@@ -1,0 +1,16 @@
+name: scrape doctormobile.lk
+
+# 45 19 * * * UTC = 01:15 Sri Lanka time. Staggered so the shops are never hit at
+# once. About 10 seconds on 2026-10-24.
+on:
+  schedule:
+    - cron: '45 19 * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    uses: ./.github/workflows/scrape.yml
+    with:
+      shop: doctormobile.lk
+      timeout_minutes: 10
+    secrets: inherit
