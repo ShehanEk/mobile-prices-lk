@@ -15,7 +15,7 @@ then cut down. No shared package.
 |---|---|---|
 | `src/lib/http.ts` (polite fetch) | `src/normalize/extract.ts` → `extractPhone` only | `src/compat/`, `/build`, `build-store.ts` |
 | `src/scrapers/woocommerce.ts` + `types.ts` | `src/db/schema.ts` (see below) | `src/catalog/` (no spec catalogs) |
-| `src/pipeline/scrape.ts`, `runs.ts`, sanity gate | `src/lib/site.ts` (name, brands as "categories") | `src/normalize/ai.ts` (titles here are clean; add back only if unmatched rows pile up) |
+| `src/pipeline/scrape.ts`, `runs.ts`, sanity gate | `src/lib/site.ts` (name, brands as "categories") | — |
 | `src/lib/deals.ts`, `search.ts`, `og.tsx`, `Analytics.tsx` | Phone page and list page UI (designed on canvas first) | PC scrapers (gamestreet, nanotek …) |
 | `/api/revalidate`, `next.config.ts` headers, workflows | `src/queries/seo.ts` (cache per brand) | `src/queries/parts.ts` (already dead) |
 
@@ -82,6 +82,26 @@ Classification: "company", "official", "<brand> warranty" → `company`;
 "Apple Care", "Apple warranty" → `apple`. Unclassified text stays
 `unstated` with the raw text logged, so new phrasings are found by reading
 the rejects.
+
+## Model fallback for unclear rows (phase 2)
+
+Rules run first on every row; the Claude API sees only what they leave
+unclear. Same contract as PCPrice.lk's `src/normalize/ai.ts`, which is copied
+and extended:
+
+| Unclear case | The model is given | It answers |
+|---|---|---|
+| Title the extractor can't resolve to a `phone_id` | The title, the shop's option values, and the existing `phone_id`s for that brand | One of those ids, or "none" |
+| Warranty text the classifier can't place | The raw warranty text | `company`, `shop`, `apple` or `unstated` |
+
+- It never recalls a spec or invents a phone: it picks from what it was given
+  or declines. Only high-confidence answers are used.
+- Every model decision is logged with its reason, and stored per
+  `(shop, raw title)` / per warranty text, so the same text is never asked
+  twice. Nightly calls are only for text not seen before.
+- `ANTHROPIC_API_KEY` in `.env.local` and as a GitHub Actions secret. A missing
+  key degrades the run (rows stay unmatched), never fails it.
+- Model: Claude Haiku 5.5 (`claude-haiku-5-5`); see [decisions](decisions.md).
 
 ## Rendering and caching
 
