@@ -87,6 +87,9 @@ Approved on the [design canvas](https://claude.ai/artifact/5c2UPCMy6WQSiMyJBveBw
   warranty), then every price with a warranty badge and a "Company warranty
   only" switch.
 - **No "Popular" section** until there is real data for it.
+- **Subtle motion:** cards lift 2px on hover, buttons brighten, chips and
+  table rows tint, "→" links nudge right, first content fades up on load
+  (0.5s). All off under `prefers-reduced-motion`.
 
 Rejected along the way: bold saturated colours, Apple and Material palettes,
 dark panels, drawn phones.
