@@ -94,6 +94,17 @@ Approved on the [design canvas](https://claude.ai/artifact/5c2UPCMy6WQSiMyJBveBw
 Rejected along the way: bold saturated colours, Apple and Material palettes,
 dark panels, drawn phones.
 
+## 2026-10-24 — Shops that block GitHub run from a home PC
+
+lifemobile, celltronics, geniusmobile and doctormobile answer GitHub's
+runners with 403 and a home connection normally. They run nightly from
+Shehan's PC through Windows Task Scheduler (`scripts/nightly-home.cmd`), the
+same route PCPrice.lk takes with its desktop app, without building an app.
+The bot user agent stays honest; nothing is spoofed.
+
+**Cost.** The four shops (~95% of rows) go stale on nights the PC is off. An
+always-on device at home is the fix if that happens often.
+
 ## 2026-10-24 — The Claude API settles rows the rules can't
 
 Phase 2 matching is rules first. Titles that don't resolve to a phone, and
