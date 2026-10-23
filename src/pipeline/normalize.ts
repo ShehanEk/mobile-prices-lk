@@ -1,26 +1,33 @@
 import { desc, inArray, isNull, sql } from 'drizzle-orm'
 
 import { getDb } from '@/db'
-import { listings, phones, priceHistory, rawListings } from '@/db/schema'
+import { listings, modelDecisions, phones, priceHistory, rawListings, warrantyEnum } from '@/db/schema'
 import type { Warranty } from '@/db/schema'
+import { MODEL, aiAvailable, classifyWarrantyText, matchTitle } from '@/normalize/ai'
+import type { AiAnswer } from '@/normalize/ai'
 import { extractPhone } from '@/normalize/phone'
-import type { PhoneDrop, PhoneIdentity } from '@/normalize/phone'
+import type { PhoneIdentity } from '@/normalize/phone'
 import { warrantyOf } from '@/normalize/warranty'
 
 import { betterForListing, betterWithinDay, colomboDate } from './best-row'
+import { cacheUse, estimateCostUsd, selectCandidates, titleEligible } from './model-fallback'
 
 /**
  * Stage 3 of the pipeline: turn `raw_listings` into `phones`, current
  * `listings` (one price per phone + shop + warranty class) and daily
  * `price_history`.
  *
- * Rules decide everything they can. The two hooks below are where the Claude
- * fallback plugs in (Task 5); until then they decline, and the row is dropped
- * or filed as `unstated` respectively.
+ * Rules decide everything they can. What they leave unclear goes to Claude
+ * Haiku 5.5 (`src/normalize/ai.ts`), which picks from a list we supply or
+ * declines. Every answer is stored in `model_decisions`, so a text costs one
+ * call ever. With --no-ai or no ANTHROPIC_API_KEY nothing is asked: unclear
+ * titles are dropped and unclear warranty is filed as `unstated`.
  */
 
 /** Below this a price is a placeholder ("1", "0"), not a real phone price. */
 const MIN_PLAUSIBLE_PRICE_LKR = 1000
+
+const DEFAULT_MAX_MODEL_CALLS = 300
 
 export type NormalizeOptions = {
   limit?: number
@@ -46,26 +53,8 @@ export type NormalizeResult = {
   listingsWritten: number
   historyRows: number
   modelCalls: number
-}
-
-/**
- * HOOK (Task 5 fills this): ask the model for the identity of a title the rules
- * could not place. Return null to decline. Only called for `brand` and
- * `no-model` drops, and never with --no-ai.
- */
-async function resolveUnclearTitle(
-  _rawTitle: string,
-  _shop: string,
-): Promise<PhoneIdentity | null> {
-  return null
-}
-
-/**
- * HOOK (Task 5 fills this): ask the model which warranty class an unclear
- * wording is. Return 'unstated' to decline. Never called with --no-ai.
- */
-async function resolveUnclearWarranty(_text: string | null): Promise<Warranty> {
-  return 'unstated'
+  /** Rows left for the next run (model budget spent or the API failing); not stamped. */
+  deferred: number
 }
 
 type Candidate = {
@@ -115,56 +104,163 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
     listingsWritten: 0,
     historyRows: 0,
     modelCalls: 0,
+    deferred: 0,
   }
   const drop = (reason: string) => {
     result.dropped[reason] = (result.dropped[reason] ?? 0) + 1
   }
 
-  const existingIds = new Set(
-    (await db.select({ id: phones.phoneId }).from(phones)).map((p) => p.id),
-  )
+  const existing = await db
+    .select({
+      phoneId: phones.phoneId,
+      brand: phones.brand,
+      model: phones.model,
+      ramGb: phones.ramGb,
+      storageGb: phones.storageGb,
+      esimOnly: phones.esimOnly,
+    })
+    .from(phones)
+  const existingIds = new Set(existing.map((p) => p.phoneId))
   const newPhones = new Map<string, PhoneIdentity>()
+  const extracted = raw.map((row) => extractPhone(row.rawTitle))
+
+  // --- model fallback state
+  const useAi = !opts.noAi && aiAvailable()
+  if (!opts.noAi && !useAi) log('ANTHROPIC_API_KEY is not set; model fallback off')
+  const maxCalls = opts.maxModelCalls ?? DEFAULT_MAX_MODEL_CALLS
+  const now = new Date()
+  // Phones the model may pick from: the catalogue plus every phone the rules
+  // found in this batch, so a title can match a phone first seen today.
+  const pool = new Map<string, PhoneIdentity>(existing.map((p) => [p.phoneId, p]))
+  for (const e of extracted) if (!('drop' in e) && !pool.has(e.phoneId)) pool.set(e.phoneId, e)
+  type Decision = { answer: string | null; confidence: string; reason: string; decidedAt: Date }
+  const decisions = new Map<string, Decision>()
+  if (useAi) {
+    for (const d of await db.select().from(modelDecisions)) {
+      decisions.set(`${d.kind}\u0000${d.input}`, d)
+    }
+  }
+  const tokens = { input: 0, output: 0 }
+  let cacheHits = 0
+  let aiStopped = false
+  const deferred = new Set<number>()
+
+  /**
+   * The stored answer when it may be reused (ruling 3), otherwise one call,
+   * stored. Null when no answer can be had this run (budget spent or the API
+   * failing): the row is left for the next run.
+   */
+  const decide = async <T extends string>(
+    kind: 'title' | 'warranty',
+    input: string,
+    call: () => Promise<AiAnswer<T>>,
+  ): Promise<(Decision & { fresh: boolean }) | null> => {
+    const key = `${kind}\u0000${input}`
+    const cached = decisions.get(key)
+    if (cached && cacheUse(cached, now) === 'reuse') {
+      cacheHits++
+      return { ...cached, fresh: false }
+    }
+    if (aiStopped || result.modelCalls >= maxCalls) return null
+    result.modelCalls++
+    const a = await call()
+    tokens.input += a.usage.inputTokens
+    tokens.output += a.usage.outputTokens
+    if (a.failed) {
+      // Not stored: a failed call is not a decline. Stop asking this run; the
+      // rows are retried next run.
+      log(`  model call failed, no more calls this run: ${a.reason}`)
+      aiStopped = true
+      return null
+    }
+    const d: Decision = { answer: a.answer, confidence: a.confidence, reason: a.reason, decidedAt: new Date() }
+    decisions.set(key, d)
+    if (!opts.dryRun) {
+      const values = { answer: d.answer, confidence: d.confidence, reason: d.reason, model: MODEL, decidedAt: d.decidedAt }
+      await db
+        .insert(modelDecisions)
+        .values({ kind, input, ...values })
+        .onConflictDoUpdate({ target: [modelDecisions.kind, modelDecisions.input], set: values })
+    }
+    return { ...d, fresh: true }
+  }
   // One best row per (phone, shop, warranty) for the current listing, and per
   // (phone, shop, warranty, Colombo day) for history, so a backlog lands on its own days.
   const bestListing = new Map<string, Candidate>()
   const bestHistory = new Map<string, Candidate>()
 
-  for (const row of raw) {
+  for (const [i, row] of raw.entries()) {
     const payload = (row.rawPayload ?? {}) as Record<string, unknown>
+    const price = Number(payload.priceLkr)
+    const priced = Number.isFinite(price) && price >= MIN_PLAUSIBLE_PRICE_LKR
 
     let identity: PhoneIdentity | null = null
-    const extracted = extractPhone(row.rawTitle)
-    if ('drop' in extracted) {
-      const reason: PhoneDrop['drop'] = extracted.drop
-      if (!opts.noAi && (reason === 'brand' || reason === 'no-model')) {
-        identity = await resolveUnclearTitle(row.rawTitle, row.shop)
-        if (identity) result.matchedByModel++
-        else result.unmatched++
+    const e = extracted[i]
+    if ('drop' in e) {
+      // Only a row that can be priced is worth a model call.
+      const candidates =
+        useAi && priced && titleEligible(e.drop, row.rawTitle)
+          ? selectCandidates(row.rawTitle, pool.values())
+          : []
+      if (candidates.length) {
+        const d = await decide('title', `${row.shop}\u0000${row.rawTitle}`, () =>
+          matchTitle(row.rawTitle, candidates),
+        )
+        if (!d) {
+          deferred.add(row.id)
+          continue
+        }
+        // A low-confidence guess is no match: an unmatched row is a gap, a
+        // wrong one is a wrong price in front of a buyer.
+        identity = d.answer && d.confidence === 'high' ? (pool.get(d.answer) ?? null) : null
+        if (identity) {
+          result.matchedByModel++
+          // These are the only rows a model decided; the log is their audit trail.
+          if (d.fresh) log(`  model: "${row.rawTitle}" -> ${identity.phoneId} (${d.reason})`)
+        } else {
+          result.unmatched++
+          if (d.fresh) log(`  model declined: "${row.rawTitle}" (${d.reason})`)
+        }
       }
       if (!identity) {
-        drop(reason)
+        drop(e.drop)
         continue
       }
     } else {
-      identity = extracted
+      identity = e
       result.matchedByRule++
     }
 
     // Checked before the warranty so a row that cannot be priced never costs a
     // model call.
-    const price = Number(payload.priceLkr)
-    if (!Number.isFinite(price) || price < MIN_PLAUSIBLE_PRICE_LKR) {
+    if (!priced) {
       drop('no-price')
       continue
     }
 
     const w = warrantyOf(row.rawTitle, payload)
-    let warranty: Warranty
+    let warranty: Warranty = 'unstated'
     if (w.warranty) {
       warranty = w.warranty
     } else {
       result.warrantyUnclear++
-      warranty = opts.noAi ? 'unstated' : await resolveUnclearWarranty(w.text)
+      const text = w.text
+      if (useAi && text) {
+        const d = await decide('warranty', text, () => classifyWarrantyText(text))
+        if (!d) {
+          deferred.add(row.id)
+          continue
+        }
+        const answer = warrantyEnum.enumValues.find((v) => v === d.answer)
+        // A decline or a low-confidence answer files the row as `unstated`.
+        if (answer && d.confidence === 'high') {
+          warranty = answer
+          result.warrantyByModel++
+          if (d.fresh) log(`  model warranty: "${text}" -> ${answer}`)
+        } else if (d.fresh) {
+          log(`  model warranty declined: "${text}" (${d.reason})`)
+        }
+      }
     }
 
     if (!existingIds.has(identity.phoneId) && !newPhones.has(identity.phoneId)) {
@@ -202,6 +298,15 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
       `${result.warrantyUnclear} unclear`,
   )
   log(`dropped: ${droppedText}`)
+  if (useAi) {
+    log(
+      `model: ${result.modelCalls} calls (limit ${maxCalls}), ${cacheHits} answers reused, ` +
+        `${tokens.input} input / ${tokens.output} output tokens, ` +
+        `~$${estimateCostUsd(tokens.input, tokens.output).toFixed(4)}; ` +
+        `${deferred.size} rows left for the next run`,
+    )
+  }
+  result.deferred = deferred.size
 
   if (opts.dryRun) {
     log(
@@ -280,8 +385,9 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
   }
 
   // Stamp every row looked at, dropped or not, so the next run skips titles
-  // that will never resolve.
-  const ids = raw.map((r) => r.id)
+  // that will never resolve. Rows the model could not be asked about this run
+  // stay unstamped and are retried.
+  const ids = raw.filter((r) => !deferred.has(r.id)).map((r) => r.id)
   for (let i = 0; i < ids.length; i += 200) {
     await db
       .update(rawListings)
