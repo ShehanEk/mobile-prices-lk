@@ -34,3 +34,20 @@ CREATE TABLE "raw_listings" (
 --> statement-breakpoint
 CREATE INDEX "pipeline_runs_recent_idx" ON "pipeline_runs" USING btree ("kind","shop","started_at");--> statement-breakpoint
 CREATE INDEX "raw_listings_pending_idx" ON "raw_listings" USING btree ("normalized_at","scraped_at");
+--> statement-breakpoint
+-- The lease. Written by hand because drizzle-kit does not emit partial indexes.
+--
+-- These are what stop the desktop app scraping a retailer that GitHub Actions is
+-- already scraping: GitHub's `concurrency` groups only coordinate runs inside
+-- GitHub. A second concurrent run of the same shop fails to INSERT, and that
+-- unique violation is the answer "someone else has it" — not an error.
+--
+-- Dry runs are excluded: they touch no retailer state worth serialising, and a
+-- smoke test must never block a real run.
+CREATE UNIQUE INDEX "pipeline_runs_active_scrape_idx"
+  ON "pipeline_runs" ("shop")
+  WHERE "status" = 'running' AND "kind" = 'scrape' AND "dry_run" = false;
+--> statement-breakpoint
+CREATE UNIQUE INDEX "pipeline_runs_active_normalize_idx"
+  ON "pipeline_runs" ("kind")
+  WHERE "status" = 'running' AND "kind" = 'normalize' AND "dry_run" = false;
