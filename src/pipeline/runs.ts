@@ -3,10 +3,8 @@ import { and, eq, isNull, lt, sql } from 'drizzle-orm'
 
 import { getDb } from '@/db'
 import { pipelineRuns } from '@/db/schema'
+import type { NormalizeResult } from './normalize'
 import type { RunResult } from './scrape'
-
-/** Phase 2 replaces this with the normalizer's result type. */
-type NormalizeResult = Record<string, unknown>
 
 /**
  * Recording — and serialising — pipeline runs.

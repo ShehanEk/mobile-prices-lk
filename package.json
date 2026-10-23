@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "scrape": "tsx --env-file-if-exists=.env.local scripts/scrape.ts",
+    "normalize": "tsx --env-file-if-exists=.env.local scripts/normalize.ts",
     "test": "tsx --test src/scrapers/woocommerce.test.ts src/normalize/warranty.test.ts src/normalize/phone.test.ts",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
