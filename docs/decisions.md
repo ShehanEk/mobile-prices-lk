@@ -65,6 +65,32 @@ repo that ship in both (for example Galaxy A18 4G and 5G).
 Badge "Warranty not stated". They count toward "cheapest overall", never
 toward "cheapest with company warranty".
 
+## 2026-10-23 — Brands appear as text, never logos
+
+Brand names are coloured text tiles in the site's own font. No brand logos:
+they are trademarks, Apple's guidelines forbid its logo without written
+permission, and a mix of logos and text would look uneven.
+
+## 2026-10-23 — Design: soft PCPrice.lk colours, type-led, no imagery
+
+Approved on the [design canvas](https://claude.ai/artifact/5c2UPCMy6WQSiMyJBveBwv)
+(home, brand list, phone page, phone page at 390px).
+
+- **Colours:** PCPrice.lk's soft palette: ink `#1A1F2B`, blue accent
+  `#3467D7`, pale panels `#F2F4F9`, and pale tint + darker ink per brand.
+  Warranty: company = pale blue, shop = pale amber, not stated = outline.
+  Cheapest price = pale green.
+- **Type:** Bricolage Grotesque for headings and prices, Geist for text.
+- **No phone images or drawings, no brand logos.** Pages are names, prices
+  and colour tints only.
+- **Phone page:** two headline prices (cheapest overall, cheapest with company
+  warranty), then every price with a warranty badge and a "Company warranty
+  only" switch.
+- **No "Popular" section** until there is real data for it.
+
+Rejected along the way: bold saturated colours, Apple and Material palettes,
+dark panels, drawn phones.
+
 ## 2026-10-23 — Process carried over from PCPrice.lk
 
 UI is designed on a Claude Design canvas and approved before coding.
