@@ -41,6 +41,11 @@ export const BRANDS: readonly string[] = [
 const DUAL_NETWORK = [
   'galaxy a15', 'galaxy a16', 'galaxy a17', 'galaxy a05s', 'redmi note 13',
   'redmi 13c', 'redmi a5', 'realme note 60x', 'oppo a6x', 'infinix hot 60',
+  // Ruling 5: the 2026-10-24 scrape lists each of these as both 4G and 5G, the
+  // 5G one 10k–25k LKR dearer ("Xiaomi Redmi Note 15 4G/5G 8GB RAM 256GB").
+  'redmi note 12 pro', 'redmi note 13 pro', 'redmi note 14', 'redmi note 14 pro',
+  'redmi note 15', 'redmi 15', 'redmi 15c', 'galaxy a07', 'galaxy a14',
+  'galaxy m14', 'tecno camon 50 pro',
 ]
 
 /**
@@ -76,14 +81,15 @@ const USED = /(?<![a-z])(?:used|refurb\w*|pre-?owned|open\s+box)(?![a-z])/i
 const NOT_A_PHONE = /\b(?:tab|tablet|ipad|matepad|pad|watch|buds|band)\b/i
 
 /**
- * Rule 3. A leading brand word, including the typos shops ship ("Xiaom",
- * "Hono"). The brand word is not part of the model.
+ * Rule 3. A leading brand word, including the typo shops ship ("Xiaom"). Not
+ * "Hono": that is its own feature-phone brand ("Hono H1 Plus"), ruling 6.
+ * The brand word is not part of the model.
  */
 const BRAND_WORDS: [RegExp, string][] = [
   [/^apple\b/i, 'Apple'],
   [/^samsung\b/i, 'Samsung'],
   [/^xiaomi?\b/i, 'Xiaomi'],
-  [/^hono(?:u?r)?\b/i, 'Honor'],
+  [/^honou?r\b/i, 'Honor'],
   [/^huawei\b/i, 'Huawei'],
   [/^oppo\b/i, 'OPPO'],
   [/^vivo\b/i, 'vivo'],
@@ -289,7 +295,8 @@ export function extractPhone(rawTitle: string): PhoneIdentity | PhoneDrop {
 
   const esimOnly = brand === 'Apple' && ESIM.test(title)
   for (const re of NOISE) model = model.replace(re, ' ')
-  const network = model.match(NETWORK)?.[1]?.toUpperCase()
+  // The network can follow the sizes: "Tecno Camon 50 Pro 8GB RAM 256GB 5G".
+  const network = (model.match(NETWORK) ?? title.match(NETWORK))?.[1]?.toUpperCase()
   model = model.replace(new RegExp(NETWORK.source, 'gi'), ' ')
   model = model
     // "OnePlus 6 -Mirror Black": a trailing colour after a dash.

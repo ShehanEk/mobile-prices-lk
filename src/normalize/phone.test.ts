@@ -15,7 +15,8 @@ const ids: [string, string][] = [
   ['Samsung Galaxy A14 6+128', 'samsung-galaxy-a14-6gb-128gb'],
   ['Samsung Galaxy A16 5G (8GB RAM 256GB)', 'samsung-galaxy-a16-5g-8gb-256gb'],
   ['Samsung Galaxy A15 4G 8GB RAM 128GB', 'samsung-galaxy-a15-4g-8gb-128gb'],
-  ['Xiaomi Redmi Note 13 Pro 5G (8GB RAM 256GB)', 'xiaomi-redmi-note-13-pro-8gb-256gb'],
+  // Ruling 5: Redmi Note 13 Pro is sold as both 4G and 5G, so the network stays.
+  ['Xiaomi Redmi Note 13 Pro 5G (8GB RAM 256GB)', 'xiaomi-redmi-note-13-pro-5g-8gb-256gb'],
   ['Redmi Note 13 8GB-256GB', 'xiaomi-redmi-note-13-8gb-256gb'],
   ['Redmi 12 6GB+128GB', 'xiaomi-redmi-12-6gb-128gb'],
   ['REDMI 15 6GB + 128GB', 'xiaomi-redmi-15-6gb-128gb'],
@@ -60,6 +61,10 @@ const ids: [string, string][] = [
   ['OnePlus Nord CE3 5G 12GB 256GB', 'oneplus-nord-ce-3-12gb-256gb'],
   ['Samsung Galaxy Note10+ 12GB RAM, 256GB', 'samsung-galaxy-note-10-plus-12gb-256gb'],
   ['CMF by Nothing Phone 1 8GB RAM 256GB', 'nothing-cmf-phone-1-8gb-256gb'],
+  // Ruling 5: 4G and 5G versions of one name are different phones (5G sells ~15k LKR higher).
+  ['Xiaomi Redmi Note 15 4G 8GB RAM 256GB', 'xiaomi-redmi-note-15-4g-8gb-256gb'],
+  ['Xiaomi Redmi Note 15 5G 8GB RAM 256GB', 'xiaomi-redmi-note-15-5g-8gb-256gb'],
+  ['Tecno Camon 50 Pro 8GB RAM 256GB 5G', 'tecno-camon-50-pro-5g-8gb-256gb'],
 ]
 for (const [title, id] of ids) {
   test(`id: ${title}`, () => {
@@ -80,6 +85,8 @@ const drops: [string, string][] = [
   ['Google Pixel 7 ⎢256', 'no-ram'],
   ['Google Pixel 9a 128GB', 'no-ram'],
   ['iPhone 13 128GB (Used)', 'used'],
+  // Ruling 6: Hono is its own feature-phone brand, not a typo for Honor.
+  ['Hono H1 Plus', 'brand'],
 ]
 for (const [title, reason] of drops) {
   test(`drop ${reason}: ${title}`, () => {
