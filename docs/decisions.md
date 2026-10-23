@@ -94,6 +94,19 @@ Approved on the [design canvas](https://claude.ai/artifact/5c2UPCMy6WQSiMyJBveBw
 Rejected along the way: bold saturated colours, Apple and Material palettes,
 dark panels, drawn phones.
 
+## 2026-10-24 — The Claude API settles rows the rules can't
+
+Phase 2 matching is rules first. Titles that don't resolve to a phone, and
+warranty text that doesn't classify, go to the Claude API, which picks from a
+supplied list or declines. Decisions are logged and remembered per text, so
+each unclear text costs one call ever. Details in
+[architecture](architecture.md#model-fallback-for-unclear-rows-phase-2).
+
+Model: **Claude Haiku 5.5** (`claude-haiku-5-5`, $0.10 / $0.50 per 1M tokens
+in / out). Picking from a supplied list doesn't need a bigger model; estimated
+~$0.15 for the first run and ~$0.25 a month after. Revisit only if its
+declines or wrong picks show up in the logged decisions.
+
 ## 2026-10-23 — Process carried over from PCPrice.lk
 
 UI is designed on a Claude Design canvas and approved before coding.

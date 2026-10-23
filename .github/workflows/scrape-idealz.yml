@@ -1,0 +1,16 @@
+name: scrape idealz.lk
+
+# 30 19 * * * UTC = 01:00 Sri Lanka time. Staggered so the shops are never hit at
+# once. About 10 seconds on 2026-10-24.
+on:
+  schedule:
+    - cron: '30 19 * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    uses: ./.github/workflows/scrape.yml
+    with:
+      shop: idealz.lk
+      timeout_minutes: 10
+    secrets: inherit

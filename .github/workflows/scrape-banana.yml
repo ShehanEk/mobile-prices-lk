@@ -1,0 +1,16 @@
+name: scrape banana.lk
+
+# 15 19 * * * UTC = 00:45 Sri Lanka time. Staggered so the shops are never hit at
+# once. About 10 seconds on 2026-10-24.
+on:
+  schedule:
+    - cron: '15 19 * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    uses: ./.github/workflows/scrape.yml
+    with:
+      shop: banana.lk
+      timeout_minutes: 10
+    secrets: inherit

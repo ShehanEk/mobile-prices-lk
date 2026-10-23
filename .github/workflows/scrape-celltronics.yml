@@ -1,0 +1,16 @@
+name: scrape celltronics.lk
+
+# 30 18 * * * UTC = 00:00 Sri Lanka time. Staggered so the shops are never hit at
+# once. About 1 minute on 2026-10-24.
+on:
+  schedule:
+    - cron: '30 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    uses: ./.github/workflows/scrape.yml
+    with:
+      shop: celltronics.lk
+      timeout_minutes: 10
+    secrets: inherit
