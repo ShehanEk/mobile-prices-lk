@@ -59,6 +59,7 @@ jobs:
           npm run normalize 2>&1 | tee /tmp/normalize.log || status=$?
           echo "### normalize" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
-          grep -E '^(resolved|dropped:|wrote) ' /tmp/normalize.log >> "$GITHUB_STEP_SUMMARY" || true
+          grep -E '^(resolved|dropped:|model:|wrote) ' /tmp/normalize.log >> "$GITHUB_STEP_SUMMARY" || true
+          if [ "$status" -ne 0 ]; then tail -5 /tmp/normalize.log >> "$GITHUB_STEP_SUMMARY"; fi
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           exit $status

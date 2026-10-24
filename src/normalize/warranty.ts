@@ -36,7 +36,7 @@ export function classifyWarranty(text: string | null | undefined): Warranty | nu
  * word must be a whole word starting with a letter, so a size ("256GB Company Warranty") is not
  * taken as part of the phrase.
  */
-const TITLE_PHRASE = /(apple\s*care|(?:\b[a-z]\w*\s+)?company\s+warranty|genxt\s+warranty)/i
+const TITLE_PHRASE = /(apple\s*care|(?:\b[a-z]\w*\s+)?company\s+warranty|(?:genxt|genext|gnext)\s+warranty)/i
 
 /**
  * The warranty a row was sold with: the chosen option first (celltronics,

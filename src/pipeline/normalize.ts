@@ -11,7 +11,7 @@ import { warrantyOf } from '@/normalize/warranty'
 
 import { betterForListing, betterWithinDay, colomboDate } from './best-row'
 import { cacheUse, capInput, estimateCostUsd, selectCandidates, titleEligible } from './model-fallback'
-import { findSuperseded } from './superseded'
+import { dropStale, findSuperseded } from './superseded'
 
 /**
  * Stage 3 of the pipeline: turn `raw_listings` into `phones`, current
@@ -55,7 +55,7 @@ export type NormalizeResult = {
   phonesCreated: number
   listingsWritten: number
   historyRows: number
-  /** Old-class listings and history points replaced because a product changed class. On a dry run, the number that would be. */
+  /** Old-class listings and history points replaced because a product changed class. On a dry run, the number that would be. A history point may name a day with no stored row; its delete then does nothing. */
   supersededListings: number
   supersededHistory: number
   modelCalls: number
@@ -197,6 +197,7 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
   }
   // One best row per (phone, shop, warranty) for the current listing, and per
   // (phone, shop, warranty, Colombo day) for history, so a backlog lands on its own days.
+  const scraped: Candidate[] = []
   const bestListing = new Map<string, Candidate>()
   const bestHistory = new Map<string, Candidate>()
 
@@ -293,8 +294,14 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
       scrapedAt: row.scrapedAt,
     }
     const key = [candidate.phoneId, candidate.shop, candidate.warranty].join('\u0000')
-    keepBest(bestListing, key, candidate, betterForListing)
+    scraped.push(candidate)
     keepBest(bestHistory, `${key}\u0000${colomboDate(row.scrapedAt)}`, candidate, betterWithinDay)
+  }
+
+  // A product's older classes in this run are stale: only the latest-scraped
+  // class becomes the current listing (history keeps every day as scraped).
+  for (const c of dropStale(scraped)) {
+    keepBest(bestListing, [c.phoneId, c.shop, c.warranty].join('\u0000'), c, betterForListing)
   }
 
   result.phonesCreated = newPhones.size
@@ -352,7 +359,10 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
 
   // --- writes. Neon's HTTP driver has no transactions, so the order is what
   // keeps a crash harmless: phones first (foreign key), rows stamped last, and
-  // every statement is an upsert so a re-run converges.
+  // every statement is an upsert so a re-run converges. Superseded rows are
+  // deleted after the upserts: the deletes never touch a key written this run,
+  // so a crash between them leaves a duplicate that the re-run removes, never
+  // a gap.
 
   const phoneValues = [...newPhones.values()].map((p) => ({
     phoneId: p.phoneId,
@@ -364,32 +374,6 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
   }))
   for (let i = 0; i < phoneValues.length; i += 100) {
     await db.insert(phones).values(phoneValues.slice(i, i + 100)).onConflictDoNothing()
-  }
-
-  for (let i = 0; i < superseded.listings.length; i += 100) {
-    await db.delete(listings).where(
-      or(
-        ...superseded.listings
-          .slice(i, i + 100)
-          .map((r) => and(eq(listings.phoneId, r.phoneId), eq(listings.shop, r.shop), eq(listings.warranty, r.warranty))),
-      ),
-    )
-  }
-  for (let i = 0; i < superseded.history.length; i += 100) {
-    await db.delete(priceHistory).where(
-      or(
-        ...superseded.history
-          .slice(i, i + 100)
-          .map((r) =>
-            and(
-              eq(priceHistory.phoneId, r.phoneId),
-              eq(priceHistory.shop, r.shop),
-              eq(priceHistory.warranty, r.warranty),
-              eq(priceHistory.recordedOn, r.recordedOn),
-            ),
-          ),
-      ),
-    )
   }
 
   const listingValues = [...bestListing.values()].map((c) => ({
@@ -442,6 +426,32 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
         ],
         set: { priceLkr: sql`excluded.price_lkr`, inStock: sql`excluded.in_stock` },
       })
+  }
+
+  for (let i = 0; i < superseded.listings.length; i += 100) {
+    await db.delete(listings).where(
+      or(
+        ...superseded.listings
+          .slice(i, i + 100)
+          .map((r) => and(eq(listings.phoneId, r.phoneId), eq(listings.shop, r.shop), eq(listings.warranty, r.warranty))),
+      ),
+    )
+  }
+  for (let i = 0; i < superseded.history.length; i += 100) {
+    await db.delete(priceHistory).where(
+      or(
+        ...superseded.history
+          .slice(i, i + 100)
+          .map((r) =>
+            and(
+              eq(priceHistory.phoneId, r.phoneId),
+              eq(priceHistory.shop, r.shop),
+              eq(priceHistory.warranty, r.warranty),
+              eq(priceHistory.recordedOn, r.recordedOn),
+            ),
+          ),
+      ),
+    )
   }
 
   // Stamp every row looked at, dropped or not, so the next run skips titles

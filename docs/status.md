@@ -40,15 +40,14 @@ Last updated 24 October 2026.
   | Dropped | brand 704, no storage 376, no RAM 316, not a phone 8 |
   | Priced under LKR 1,000 (dropped after matching) | 232 |
   | Phones | 1,324 |
-  | Listings by warranty | company 943, shop 747, apple 186, not stated 292 (2,168) |
-  | Price history | 2,168 rows, all dated 2026-10-24 |
+  | Listings by warranty | company 951, shop 747, apple 186, not stated 250 (2,134) |
+  | Price history | 2,134 rows, all dated 2026-10-24 |
   | Warranty set by the model | 42 rows (16 distinct texts) |
   | Model calls | 16 of 60, 11,753 input / 1,131 output tokens, about $0.002 |
   | Spot check, 30 random phones at 2+ shops | 30 / 30 correct |
 
-  The 2,168 includes 34 stale "not stated" listings (and 34 history rows)
-  left when the model moved their warranty class to company (Gnext text).
-  Without them: 2,134 listings, 258 not stated. See open items.
+  The first run left 84 duplicate rows (old warranty class beside the new one);
+  they were removed on 2026-10-24, which gives the post-cleanup numbers above.
 - **Not built yet:** the site.
 
 ## Setup outside the repo
@@ -63,7 +62,7 @@ Last updated 24 October 2026.
 
 - **`ANTHROPIC_API_KEY` GitHub Actions secret.** Add it so the nightly job can
   ask the model (until then unclear text shows as not stated).
-- **Stale listings after a warranty class change.** Fixed 2026-10-24: normalize now replaces the old-class listing and same-day history row, and the 34 stale rows (plus 8 more from the Genext rule) are gone.
+- **Stale listings after a warranty class change.** Fixed 2026-10-24: normalize now lets the latest-scraped class win per product and deletes the old-class listing and its history on the days written, and the 34 stale rows (plus 8 more from the Genext rule) are gone.
 - **Dual-network list (`src/normalize/phone.ts`)** needs a check every few
   months: a model newly sold as both 4G and 5G merges until listed.
 - **Query-side staleness.** A listing whose shop stops listing a phone keeps

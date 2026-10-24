@@ -80,3 +80,12 @@ test('warrantyOf skips a blank chosen option', () => {
     { text: '1 Year Company Warranty', warranty: 'company' },
   )
 })
+
+test('warrantyOf reads a Genxt, Genext or Gnext warranty phrase from the title', () => {
+  for (const name of ['Genxt', 'Genext', 'Gnext']) {
+    assert.deepEqual(
+      warrantyOf(`Samsung Galaxy A37 5G 12GB | 256GB ${name} Warranty`, { variant: {}, warrantyText: null }),
+      { text: `${name} Warranty`, warranty: 'company' },
+    )
+  }
+})
