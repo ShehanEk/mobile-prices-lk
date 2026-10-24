@@ -27,8 +27,11 @@ const productOf = (r: { phoneId: string; shop: string; url: string }) => [r.phon
 
 /**
  * The candidates left once a product's older classes are dropped: one whose
- * product has a later-scraped candidate of another class is stale. A --redo
- * spanning two scrape days would otherwise write the old class back.
+ * product has a candidate of another class from a later Colombo day is stale.
+ * A --redo spanning two scrape days would otherwise write the old class back.
+ * Judged by day, not by timestamp: one scrape is inserted in chunks with
+ * slightly different times, and two classes of a product on the same day both
+ * stay.
  */
 export function dropStale<T extends ListingRef>(candidates: T[]): T[] {
   const byProduct = new Map<string, T[]>()
@@ -40,38 +43,44 @@ export function dropStale<T extends ListingRef>(candidates: T[]): T[] {
     (c) =>
       !byProduct
         .get(productOf(c))!
-        .some((o) => o.warranty !== c.warranty && o.scrapedAt.getTime() > c.scrapedAt.getTime()),
+        .some((o) => o.warranty !== c.warranty && colomboDate(o.scrapedAt) > colomboDate(c.scrapedAt)),
   )
 }
 
 /**
  * Which stored rows a run's writes replace. `written` and `writtenHistory` are
- * what this run upserts (listings after `dropStale`).
+ * what this run upserts (the per-key winners); they decide which keys and
+ * (key, day) points are protected. `candidates` (listings after `dropStale`)
+ * and `scraped` (every row of the run) say what each product did, including
+ * a product that lost its key to another product: it still changed class.
+ * They default to the winners.
  *
- * A stored listing is superseded when this run writes the same product under
+ * A stored listing is superseded when the run has the same product under
  * another class from a scrape at least as new. A key this run writes itself is
  * never superseded: another product of that class may hold it, and the upsert
  * settles that.
  *
- * Each superseded class also loses its history on every day this run writes a
- * point for the product (the shop had the new class that day, so the old point
- * was only the wrong label), unless that (key, day) is itself written this
- * run. Days this run does not write stay: they were true then.
+ * Each superseded class also loses its history on every day the run scraped
+ * the product (the shop had the new class that day, so the old point was only
+ * the wrong label), unless that (key, day) is itself written this run. Days
+ * this run does not scrape stay: they were true then.
  */
 export function findSuperseded(
   stored: ListingRef[],
   written: ListingRef[],
   writtenHistory: ListingRef[],
+  candidates: ListingRef[] = written,
+  scraped: ListingRef[] = writtenHistory,
 ): { listings: ListingRef[]; history: HistoryRef[] } {
   const writtenKeys = new Set(written.map(keyOf))
   const historyKeys = new Set(writtenHistory.map((h) => `${keyOf(h)}\u0000${colomboDate(h.scrapedAt)}`))
   const byProduct = new Map<string, ListingRef[]>()
-  for (const w of written) {
+  for (const w of candidates) {
     const k = productOf(w)
     byProduct.set(k, [...(byProduct.get(k) ?? []), w])
   }
   const daysByProduct = new Map<string, Set<string>>()
-  for (const h of writtenHistory) {
+  for (const h of scraped) {
     const k = productOf(h)
     daysByProduct.set(k, (daysByProduct.get(k) ?? new Set()).add(colomboDate(h.scrapedAt)))
   }
@@ -80,7 +89,7 @@ export function findSuperseded(
   const history: HistoryRef[] = []
   for (const s of stored) {
     if (writtenKeys.has(keyOf(s))) continue
-    const newer = (byProduct.get(productOf(s)) ?? []).some((w) => s.scrapedAt.getTime() <= w.scrapedAt.getTime())
+    const newer = (byProduct.get(productOf(s)) ?? []).some((w) => w.warranty !== s.warranty && s.scrapedAt.getTime() <= w.scrapedAt.getTime())
     if (!newer) continue
     listings.push(s)
     for (const day of daysByProduct.get(productOf(s)) ?? []) {

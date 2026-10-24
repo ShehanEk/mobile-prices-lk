@@ -118,3 +118,32 @@ test('the history days of another product do not delete this product history', (
   assert.equal(r.listings.length, 1)
   assert.deepEqual(r.history, [])
 })
+
+test('a product that changed class but lost its new key to another product is still replaced', () => {
+  // A (url a) was unstated and is now company; B (url b) is also company, cheaper, and holds that key.
+  const a = row('company', DAY2, 'https://s.lk/a')
+  const b = row('company', DAY2, 'https://s.lk/b')
+  const stored = [row('unstated', DAY1), row('company', DAY1, 'https://s.lk/b')]
+  // Winners only: A's change is invisible.
+  assert.deepEqual(findSuperseded(stored, [b], [b]), { listings: [], history: [] })
+  // With every candidate and every scraped row it is seen.
+  const r = findSuperseded(stored, [b], [b], [a, b], [a, b])
+  assert.deepEqual(r.listings, [row('unstated', DAY1)])
+  assert.deepEqual(r.history, [{ phoneId: 'p1', shop: 'geniusmobile.lk', warranty: 'unstated', recordedOn: '2026-10-25' }])
+})
+
+test('a same-class candidate that lost its key does not supersede that class', () => {
+  // A is still company, but lost the key to B: nothing about A changed.
+  const a = row('company', DAY2, 'https://s.lk/a')
+  const b = row('company', DAY2, 'https://s.lk/b')
+  const r = findSuperseded([row('company', DAY1, 'https://s.lk/a')], [b], [b], [a, b], [a, b])
+  assert.deepEqual(r, { listings: [], history: [] })
+})
+
+test('two classes of one product scraped the same day are both kept, whatever the chunk time', () => {
+  // Inserted in different 100-row chunks of one scrape, so a few minutes apart.
+  const early = row('unstated', '2026-10-23T21:10:00Z')
+  const late = row('company', '2026-10-23T21:14:30Z')
+  assert.deepEqual(dropStale([early, late]), [early, late])
+  assert.deepEqual(dropStale([late, early]), [late, early])
+})

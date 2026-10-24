@@ -227,8 +227,8 @@ const NOISE: RegExp[] = [
   // "Nokia 105 with Company Warranty"; the lead word is a known one, never a
   // model word ("Galaxy A05s Company Warranty" keeps A05s).
   /(?:\b(?:with|samsung|genxt|softlogic|abans|official)\s+)?\bcompany\s+warranty\b/gi,
-  // "Xiaomi Redmi 13 4G 6GB RAM 128GB GENXT Warranty"
-  /\bgenxt\s+warranty\b/gi,
+  // "Xiaomi Redmi 13 4G 6GB RAM 128GB GENXT Warranty"; spellings as in warranty.ts
+  /\b(?:genxt|genext|gnext)\s+warranty\b/gi,
   // "Samsung Galaxy S21 Ultra 5G with Free Gift"
   /\bwith\s+free\s+gift\b/gi,
   // "HONOR Magic V5 Foldable 16GB RAM 512GB": Magic V5 only comes foldable.

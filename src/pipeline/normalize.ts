@@ -89,6 +89,7 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
   const log = opts.log ?? ((m: string) => console.log(m))
   const db = getDb()
 
+  const rowLimit = opts.limit ?? 20000
   const raw = await db
     .select()
     .from(rawListings)
@@ -96,7 +97,11 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
     // A plain run takes the oldest unprocessed rows first, so repeated runs drain
     // a backlog. --redo sees every row, so a limit must keep the newest ones.
     .orderBy(...(opts.redo ? [desc(rawListings.scrapedAt), desc(rawListings.id)] : [rawListings.scrapedAt, rawListings.id]))
-    .limit(opts.limit ?? 20000)
+    .limit(rowLimit)
+
+  if (opts.redo && raw.length >= rowLimit) {
+    log(`warning: --redo read ${rowLimit} rows, the limit; older rows were not covered and keep their old class`)
+  }
 
   const result: NormalizeResult = {
     considered: raw.length,
@@ -300,7 +305,8 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
 
   // A product's older classes in this run are stale: only the latest-scraped
   // class becomes the current listing (history keeps every day as scraped).
-  for (const c of dropStale(scraped)) {
+  const current = dropStale(scraped)
+  for (const c of current) {
     keepBest(bestListing, [c.phoneId, c.shop, c.warranty].join('\u0000'), c, betterForListing)
   }
 
@@ -322,6 +328,8 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
       .from(listings),
     [...bestListing.values()],
     [...bestHistory.values()],
+    current,
+    scraped,
   )
   result.supersededListings = superseded.listings.length
   result.supersededHistory = superseded.history.length

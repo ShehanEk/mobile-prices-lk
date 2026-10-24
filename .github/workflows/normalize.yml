@@ -7,6 +7,9 @@ on:
     - cron: '30 21 * * *'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   normalize:
     runs-on: ubuntu-latest

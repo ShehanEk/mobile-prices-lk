@@ -55,6 +55,7 @@ const ids: [string, string][] = [
   ['Apple iPhone 16 128GB E – Sim with Apple Care', 'apple-iphone-16-128gb-esim'],
   ['Samsung Galaxy S24 Ultra (12GB RAM512GB)', 'samsung-galaxy-s24-ultra-12gb-512gb'],
   ['Apple iPhone 12 Purple – Genxt Warranty 128GB', 'apple-iphone-12-128gb'],
+  ['iPhone 12 Purple – Gnext Warranty 128GB', 'apple-iphone-12-128gb'],
   ['Apple iPhone 7 RED 128GB', 'apple-iphone-7-128gb'],
   ['Apple iPhone 8 Product (RED) 256GB', 'apple-iphone-8-256gb'],
   ['Honor Play10 (4GB / 128GB)', 'honor-play-10-4gb-128gb'],

@@ -131,7 +131,10 @@ export const listings = pgTable(
   (t) => [primaryKey({ columns: [t.phoneId, t.shop, t.warranty] })],
 )
 
-/** Append-only daily points, one per (phone, shop, warranty, day). */
+/**
+ * Daily points, one per (phone, shop, warranty, day). Rows are only added,
+ * except that normalize deletes a point whose warranty class was superseded.
+ */
 export const priceHistory = pgTable(
   'price_history',
   {

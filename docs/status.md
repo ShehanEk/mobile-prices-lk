@@ -54,7 +54,7 @@ Last updated 24 October 2026.
 
 | What | Where | State |
 |---|---|---|
-| Database | Neon project `mobileprices`, AWS us-east-2 (Ohio) | Migration `0000` applied: `raw_listings`, `pipeline_runs`, lease indexes |
+| Database | Neon project `mobileprices`, AWS us-east-2 (Ohio) | Migrations `0000` (`raw_listings`, `pipeline_runs`, lease indexes) and `0001` applied |
 | Repo | [ShehanEk/mobile-prices-lk](https://github.com/ShehanEk/mobile-prices-lk), public | `main` = planning docs; phase 1 in PR #1 |
 | Domain | `mobileprices.lk` | Not registered yet |
 
@@ -63,6 +63,9 @@ Last updated 24 October 2026.
 - **`ANTHROPIC_API_KEY` GitHub Actions secret.** Add it so the nightly job can
   ask the model (until then unclear text shows as not stated).
 - **Stale listings after a warranty class change.** Fixed 2026-10-24: normalize now lets the latest-scraped class win per product and deletes the old-class listing and its history on the days written, and the 34 stale rows (plus 8 more from the Genext rule) are gone.
+- **`--redo` reads only the newest 20,000 rows.** Normalize logs a warning when
+  it hits the limit; rows beyond it are not re-matched and keep their old
+  class. Raise `--limit` or run in slices once `raw_listings` outgrows it.
 - **Dual-network list (`src/normalize/phone.ts`)** needs a check every few
   months: a model newly sold as both 4G and 5G merges until listed.
 - **Query-side staleness.** A listing whose shop stops listing a phone keeps
@@ -80,3 +83,8 @@ Last updated 24 October 2026.
   `@neondatabase/serverless`, which needs WebSockets that Node 20 lacks, and
   then exits without applying anything. `pg` is a dev dependency for that
   reason.
+
+## Known limits
+
+- **Two normalize runs on the same Sri Lanka day:** the later run's row is
+  stored for the day, not the in-stock/cheapest pick across both runs.
