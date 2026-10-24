@@ -1,0 +1,64 @@
+name: normalize
+
+# Nightly matching: raw_listings -> phones, listings, price_history.
+# 21:30 UTC is 03:00 in Sri Lanka, after the 01:30 home-PC scrape.
+on:
+  schedule:
+    - cron: '30 21 * * *'
+  workflow_dispatch:
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # Two overlapping runs would race on the same unprocessed rows.
+    concurrency:
+      group: normalize
+      cancel-in-progress: false
+
+    steps:
+      # Fail before installing anything: without a database there is nothing to do.
+      - name: Require configuration
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL is not set. Add it under Settings → Secrets and variables → Actions → Secrets."
+            exit 1
+          fi
+
+      # Not an error: the job still matches by rules, and unclear warranty text
+      # is filed as 'unstated' until the key is added.
+      - name: Check model key
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::warning::ANTHROPIC_API_KEY is not set. The model fallback is off; unclear warranty text is filed as 'unstated' and unclear titles are dropped."
+          fi
+
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Normalize
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        # Without pipefail the pipeline's exit code is tee's, so a failed run
+        # would show green (see scrape.yml). The status is held until the summary
+        # is written, because a failed run is when it matters.
+        run: |
+          set -o pipefail
+          status=0
+          npm run normalize 2>&1 | tee /tmp/normalize.log || status=$?
+          echo "### normalize" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          grep -E '^(resolved|dropped:|wrote) ' /tmp/normalize.log >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit $status
