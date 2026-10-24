@@ -8,6 +8,13 @@
       "when": 1792780677247,
       "tag": "0000_smart_lockjaw",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792790752749,
+      "tag": "0001_closed_the_twelve",
+      "breakpoints": true
     }
   ]
 }

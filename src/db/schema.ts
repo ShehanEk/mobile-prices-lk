@@ -1,4 +1,18 @@
-import { boolean, index, integer, jsonb, pgEnum, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core'
+import {
+  boolean,
+  date,
+  index,
+  integer,
+  jsonb,
+  numeric,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  serial,
+  text,
+  timestamp,
+  uniqueIndex,
+} from 'drizzle-orm/pg-core'
 
 /** What we browse. Tablets are the first add-on; see docs/decisions.md. */
 export const categoryEnum = pgEnum('category', ['phones'])
@@ -84,7 +98,84 @@ export const pipelineRuns = pgTable(
   (t) => [index('pipeline_runs_recent_idx').on(t.kind, t.shop, t.startedAt)],
 )
 
+/** How a price is backed. See docs/decisions.md (warranty is an offer attribute). */
+export const warrantyEnum = pgEnum('warranty', ['company', 'shop', 'apple', 'unstated'])
+export type Warranty = (typeof warrantyEnum.enumValues)[number]
+
+/** One row per phone: brand + model + RAM + storage. The id is the public URL. */
+export const phones = pgTable('phones', {
+  phoneId: text('phone_id').primaryKey(),
+  brand: text('brand').notNull(),
+  model: text('model').notNull(),
+  /** Null for Apple, which never states RAM. */
+  ramGb: integer('ram_gb'),
+  storageGb: integer('storage_gb').notNull(),
+  esimOnly: boolean('esim_only').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+/** Current price per (phone, shop, warranty), overwritten each run. */
+export const listings = pgTable(
+  'listings',
+  {
+    phoneId: text('phone_id').notNull().references(() => phones.phoneId, { onDelete: 'cascade' }),
+    shop: text('shop').notNull(),
+    warranty: warrantyEnum('warranty').notNull(),
+    /** The shop's own wording, shown under the badge. */
+    warrantyText: text('warranty_text'),
+    priceLkr: numeric('price_lkr', { precision: 12, scale: 2 }).notNull(),
+    url: text('url').notNull(),
+    inStock: boolean('in_stock').notNull(),
+    scrapedAt: timestamp('scraped_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.phoneId, t.shop, t.warranty] })],
+)
+
+/**
+ * Daily points, one per (phone, shop, warranty, day). Rows are only added,
+ * except that normalize deletes a point whose warranty class was superseded.
+ */
+export const priceHistory = pgTable(
+  'price_history',
+  {
+    phoneId: text('phone_id').notNull().references(() => phones.phoneId, { onDelete: 'cascade' }),
+    shop: text('shop').notNull(),
+    warranty: warrantyEnum('warranty').notNull(),
+    recordedOn: date('recorded_on').notNull(),
+    priceLkr: numeric('price_lkr', { precision: 12, scale: 2 }).notNull(),
+    inStock: boolean('in_stock').notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.phoneId, t.shop, t.warranty, t.recordedOn] })],
+)
+
+/**
+ * Every answer the model gave, so the same text is never asked twice and every
+ * model-decided row can be audited. `answer` is a phone_id (kind 'title'), a
+ * warranty class (kind 'warranty'), or null for a decline.
+ */
+export const modelDecisions = pgTable(
+  'model_decisions',
+  {
+    id: serial('id').primaryKey(),
+    kind: text('kind').notNull(),
+    /** 'title': `${shop}\u0000${rawTitle}`; 'warranty': the warranty text. */
+    input: text('input').notNull(),
+    answer: text('answer'),
+    confidence: text('confidence').notNull(),
+    reason: text('reason').notNull(),
+    model: text('model').notNull(),
+    decidedAt: timestamp('decided_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('model_decisions_kind_input_idx').on(t.kind, t.input)],
+)
+
 export type RawListing = typeof rawListings.$inferSelect
 export type NewRawListing = typeof rawListings.$inferInsert
 export type PipelineRun = typeof pipelineRuns.$inferSelect
 export type NewPipelineRun = typeof pipelineRuns.$inferInsert
+export type Phone = typeof phones.$inferSelect
+export type NewPhone = typeof phones.$inferInsert
+export type Listing = typeof listings.$inferSelect
+export type NewListing = typeof listings.$inferInsert
+export type PriceHistoryRow = typeof priceHistory.$inferSelect
+export type ModelDecision = typeof modelDecisions.$inferSelect

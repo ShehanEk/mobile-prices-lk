@@ -4,14 +4,17 @@
   "private": true,
   "scripts": {
     "scrape": "tsx --env-file-if-exists=.env.local scripts/scrape.ts",
-    "test": "tsx --test src/scrapers/woocommerce.test.ts",
+    "normalize": "tsx --env-file-if-exists=.env.local scripts/normalize.ts",
+    "test": "tsx --test src/scrapers/woocommerce.test.ts src/normalize/warranty.test.ts src/normalize/phone.test.ts src/pipeline/best-row.test.ts src/pipeline/superseded.test.ts src/pipeline/model-fallback.test.ts src/normalize/ai.test.ts",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.2.0",
     "@neondatabase/serverless": "^1.1.0",
-    "drizzle-orm": "^0.45.2"
+    "drizzle-orm": "^0.45.2",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^20",
