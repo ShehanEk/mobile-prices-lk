@@ -1,4 +1,4 @@
-import { desc, inArray, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, inArray, isNull, or, sql } from 'drizzle-orm'
 
 import { getDb } from '@/db'
 import { listings, modelDecisions, phones, priceHistory, rawListings, warrantyEnum } from '@/db/schema'
@@ -11,6 +11,7 @@ import { warrantyOf } from '@/normalize/warranty'
 
 import { betterForListing, betterWithinDay, colomboDate } from './best-row'
 import { cacheUse, capInput, estimateCostUsd, selectCandidates, titleEligible } from './model-fallback'
+import { findSuperseded } from './superseded'
 
 /**
  * Stage 3 of the pipeline: turn `raw_listings` into `phones`, current
@@ -54,6 +55,9 @@ export type NormalizeResult = {
   phonesCreated: number
   listingsWritten: number
   historyRows: number
+  /** Old-class listings and history points replaced because a product changed class. On a dry run, the number that would be. */
+  supersededListings: number
+  supersededHistory: number
   modelCalls: number
   /** Rows left for the next run (model budget spent or the API failing); not stamped. */
   deferred: number
@@ -105,6 +109,8 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
     phonesCreated: 0,
     listingsWritten: 0,
     historyRows: 0,
+    supersededListings: 0,
+    supersededHistory: 0,
     modelCalls: 0,
     deferred: 0,
   }
@@ -295,6 +301,24 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
   result.listingsWritten = bestListing.size
   result.historyRows = bestHistory.size
 
+  // A product is (phone, shop, url); a changed warranty class would otherwise
+  // leave its old-class row beside the new one. Read-only, so a dry run counts too.
+  const superseded = findSuperseded(
+    await db
+      .select({
+        phoneId: listings.phoneId,
+        shop: listings.shop,
+        warranty: listings.warranty,
+        url: listings.url,
+        scrapedAt: listings.scrapedAt,
+      })
+      .from(listings),
+    [...bestListing.values()],
+    [...bestHistory.values()],
+  )
+  result.supersededListings = superseded.listings.length
+  result.supersededHistory = superseded.history.length
+
   const droppedText =
     Object.entries(result.dropped)
       .sort((a, b) => b[1] - a[1])
@@ -319,7 +343,9 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
   if (opts.dryRun) {
     log(
       `dry run, nothing written; would write ${result.phonesCreated} new phones, ` +
-        `${result.listingsWritten} listings, ${result.historyRows} price-history rows`,
+        `${result.listingsWritten} listings, ${result.historyRows} price-history rows; ` +
+        `would remove ${result.supersededListings + result.supersededHistory} superseded rows ` +
+        `(${result.supersededListings} listings, ${result.supersededHistory} history)`,
     )
     return result
   }
@@ -338,6 +364,32 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
   }))
   for (let i = 0; i < phoneValues.length; i += 100) {
     await db.insert(phones).values(phoneValues.slice(i, i + 100)).onConflictDoNothing()
+  }
+
+  for (let i = 0; i < superseded.listings.length; i += 100) {
+    await db.delete(listings).where(
+      or(
+        ...superseded.listings
+          .slice(i, i + 100)
+          .map((r) => and(eq(listings.phoneId, r.phoneId), eq(listings.shop, r.shop), eq(listings.warranty, r.warranty))),
+      ),
+    )
+  }
+  for (let i = 0; i < superseded.history.length; i += 100) {
+    await db.delete(priceHistory).where(
+      or(
+        ...superseded.history
+          .slice(i, i + 100)
+          .map((r) =>
+            and(
+              eq(priceHistory.phoneId, r.phoneId),
+              eq(priceHistory.shop, r.shop),
+              eq(priceHistory.warranty, r.warranty),
+              eq(priceHistory.recordedOn, r.recordedOn),
+            ),
+          ),
+      ),
+    )
   }
 
   const listingValues = [...bestListing.values()].map((c) => ({
@@ -405,7 +457,9 @@ export async function runNormalize(opts: NormalizeOptions = {}): Promise<Normali
 
   log(
     `wrote ${result.phonesCreated} new phones, ${result.listingsWritten} listings, ` +
-      `${result.historyRows} price-history rows`,
+      `${result.historyRows} price-history rows; ` +
+      `${result.supersededListings + result.supersededHistory} superseded rows removed ` +
+      `(${result.supersededListings} listings, ${result.supersededHistory} history)`,
   )
   return result
 }

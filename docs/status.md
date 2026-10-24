@@ -63,9 +63,7 @@ Last updated 24 October 2026.
 
 - **`ANTHROPIC_API_KEY` GitHub Actions secret.** Add it so the nightly job can
   ask the model (until then unclear text shows as not stated).
-- **Stale listings after a warranty class change.** A `--redo` that moves a
-  row to a new class leaves the old-class listing and history row behind: 34
-  of each from the first run. Delete them and make normalize replace them.
+- **Stale listings after a warranty class change.** Fixed 2026-10-24: normalize now replaces the old-class listing and same-day history row, and the 34 stale rows (plus 8 more from the Genext rule) are gone.
 - **Dual-network list (`src/normalize/phone.ts`)** needs a check every few
   months: a model newly sold as both 4G and 5G merges until listed.
 - **Query-side staleness.** A listing whose shop stops listing a phone keeps
