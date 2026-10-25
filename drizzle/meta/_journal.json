@@ -15,6 +15,13 @@
       "when": 1792790752749,
       "tag": "0001_closed_the_twelve",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792945855174,
+      "tag": "0002_free_storm",
+      "breakpoints": true
     }
   ]
 }
