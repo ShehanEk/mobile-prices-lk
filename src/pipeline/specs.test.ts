@@ -197,3 +197,9 @@ test('the request budget stops the run before it is exceeded', async () => {
 test('requests are GAP_MS apart', () => {
   assert.equal(GAP_MS, 5000)
 })
+
+test('a 200 page with none of the four facts is retried next run, not stored as matched', async () => {
+  const site = fakeSite({ [specUrl]: ok('<html><head><title>Please wait</title></head><body><h1>Samsung Galaxy A16 5G</h1></body></html>') })
+  const r = await resolveModel({ brand: 'Samsung', model: 'Galaxy A16 5G' }, [A16_5G], site.get)
+  assert.equal(r.outcome, 'retry')
+})

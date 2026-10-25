@@ -29,8 +29,9 @@ import {
  * matched: "exactly one entry fits" can only be said once every entry has been
  * seen.
  *
- * Idempotent: a matched model is never fetched again; an unmatched one is
- * retried after 30 days; a model whose page could not be read is still wanted
+ * Idempotent: a matched model is never fetched again (unless it was stored with
+ * none of the four facts, which is fetched again); an unmatched one is retried
+ * after 30 days; a model whose page could not be read is still wanted
  * next run. Nothing fetched here is ever sent to Claude.
  */
 
@@ -137,6 +138,8 @@ export async function resolveModel(phone: { brand: string; model: string }, cand
   if (page.status !== 200) return { outcome: 'retry', why: `HTTP ${page.status} on its page` }
 
   const specs = parseSpecPage(page.body)
+  // A 200 that is not a spec page (an interstitial, a stub): storing it as matched would hide the model's real page.
+  if (!specs.mainCamera && !specs.display && !specs.network && !specs.colours) return { outcome: 'retry', why: 'its page has no specs' }
   if (networkContradicts(phone.model, specs.network)) {
     return { outcome: 'unmatched', why: `network on its page (${specs.network}) differs from the model` }
   }
@@ -167,6 +170,7 @@ export async function runSpecs(opts: SpecsOptions = {}): Promise<SpecsResult> {
     left join phone_specs s on s.brand = p.brand and s.model = p.model
     where s.brand is null
        or (not s.matched and s.fetched_at < now() - make_interval(days => ${RETRY_AFTER_DAYS}))
+       or (s.matched and s.main_camera is null and s.display is null and s.network is null and s.colours is null)
     order by p.brand, p.model
   `)
   const wanted = res.rows as { brand: string; model: string }[]
