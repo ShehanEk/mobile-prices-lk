@@ -3,9 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint src/app src/lib src/queries",
     "scrape": "tsx --env-file-if-exists=.env.local scripts/scrape.ts",
     "normalize": "tsx --env-file-if-exists=.env.local scripts/normalize.ts",
-    "test": "tsx --test src/scrapers/woocommerce.test.ts src/normalize/warranty.test.ts src/normalize/phone.test.ts src/pipeline/best-row.test.ts src/pipeline/superseded.test.ts src/pipeline/model-fallback.test.ts src/normalize/ai.test.ts",
+    "specs": "tsx --env-file-if-exists=.env.local scripts/specs.ts",
+    "test": "tsx --test src/scrapers/woocommerce.test.ts src/normalize/warranty.test.ts src/normalize/phone.test.ts src/pipeline/best-row.test.ts src/pipeline/superseded.test.ts src/pipeline/model-fallback.test.ts src/normalize/ai.test.ts src/lib/prices.test.ts src/lib/deals.test.ts src/specs/gsmarena.test.ts src/pipeline/specs.test.ts src/app/components/SpecsBlock.test.tsx",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
@@ -13,14 +18,24 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^1.2.0",
     "@neondatabase/serverless": "^1.1.0",
+    "cheerio": "^1.2.0",
     "drizzle-orm": "^0.45.2",
+    "next": "16.3.2",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "4.3.3",
     "@types/node": "^20",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
     "dotenv": "^17.4.2",
     "drizzle-kit": "^0.31.10",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.2",
     "pg": "^8.23.1",
+    "tailwindcss": "4.3.3",
     "tsx": "^4.23.12",
     "typescript": "^5"
   }

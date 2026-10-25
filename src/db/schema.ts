@@ -38,7 +38,7 @@ export const rawListings = pgTable(
   (t) => [index('raw_listings_pending_idx').on(t.normalizedAt, t.scrapedAt)],
 )
 
-export const runKindEnum = pgEnum('run_kind', ['scrape', 'normalize'])
+export const runKindEnum = pgEnum('run_kind', ['scrape', 'normalize', 'specs'])
 export const runStatusEnum = pgEnum('run_status', ['running', 'ok', 'failed', 'abandoned'])
 /** Who started the run. `ci` is GitHub Actions, `desktop` the tray app, `cli` a terminal. */
 export const runActorEnum = pgEnum('run_actor', ['ci', 'desktop', 'cli'])
@@ -169,6 +169,29 @@ export const modelDecisions = pgTable(
   (t) => [uniqueIndex('model_decisions_kind_input_idx').on(t.kind, t.input)],
 )
 
+/**
+ * Phone specs from GSMArena, one row per model (brand + model; every RAM and
+ * storage configuration shares them). `matched = false` means the model was
+ * looked up and no GSMArena page matched by the rules; it is retried after 30
+ * days. GSMArena gave permission (email, 2026-10-25). Nothing here is ever sent
+ * to Claude: GSMArena's licence forbids feeding its pages to AI.
+ */
+export const phoneSpecs = pgTable(
+  'phone_specs',
+  {
+    brand: text('brand').notNull(),
+    model: text('model').notNull(),
+    matched: boolean('matched').notNull(),
+    gsmarenaUrl: text('gsmarena_url'),
+    mainCamera: text('main_camera'),
+    display: text('display'),
+    network: text('network'),
+    colours: text('colours'),
+    fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.brand, t.model] })],
+)
+
 export type RawListing = typeof rawListings.$inferSelect
 export type NewRawListing = typeof rawListings.$inferInsert
 export type PipelineRun = typeof pipelineRuns.$inferSelect
@@ -179,3 +202,5 @@ export type Listing = typeof listings.$inferSelect
 export type NewListing = typeof listings.$inferInsert
 export type PriceHistoryRow = typeof priceHistory.$inferSelect
 export type ModelDecision = typeof modelDecisions.$inferSelect
+export type PhoneSpecsRow = typeof phoneSpecs.$inferSelect
+export type NewPhoneSpecsRow = typeof phoneSpecs.$inferInsert

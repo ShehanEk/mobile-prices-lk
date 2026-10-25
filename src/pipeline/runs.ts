@@ -5,6 +5,7 @@ import { getDb } from '@/db'
 import { pipelineRuns } from '@/db/schema'
 import type { NormalizeResult } from './normalize'
 import type { RunResult } from './scrape'
+import type { SpecsResult } from './specs'
 
 /**
  * Recording — and serialising — pipeline runs.
@@ -60,7 +61,7 @@ function isUniqueViolation(err: unknown): boolean {
 }
 
 export type StartOptions = {
-  kind: 'scrape' | 'normalize'
+  kind: 'scrape' | 'normalize' | 'specs'
   shop?: string
   actor?: Actor
   dryRun?: boolean
@@ -102,7 +103,7 @@ export async function startRun(opts: StartOptions): Promise<RunHandle | null> {
 
 export type FinishOptions = {
   ok: boolean
-  result?: RunResult | NormalizeResult
+  result?: RunResult | NormalizeResult | SpecsResult
   error?: unknown
   logTail?: string
 }
@@ -134,7 +135,7 @@ export async function finishRun(
         scraped: scrape?.scraped ?? null,
         inserted: scrape?.inserted ?? null,
         withPrice: scrape?.withPrice ?? null,
-        stats: !isScrape && opts.result ? (opts.result as NormalizeResult) : null,
+        stats: !isScrape && opts.result ? (opts.result as NormalizeResult | SpecsResult) : null,
         // First line only: the useful part of an assertPlausible throw is its
         // first sentence, and the rest is a stack nobody reads from a table.
         error: message ? message.split('\n')[0].slice(0, 2000) : null,

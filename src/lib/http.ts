@@ -50,6 +50,8 @@ export type FetchOptions = {
   cookie?: string
   timeoutMs?: number
   retries?: number
+  /** 'manual' returns a 3xx as is instead of following it. Default 'follow'. */
+  redirect?: 'follow' | 'manual'
 }
 
 export type FetchResult = {
@@ -69,7 +71,7 @@ export async function politeGet(
   url: string,
   opts: FetchOptions = {},
 ): Promise<FetchResult> {
-  const { ajax = false, cookie, timeoutMs = 30_000, retries = 3 } = opts
+  const { ajax = false, cookie, timeoutMs = 30_000, retries = 3, redirect = 'follow' } = opts
   const host = new URL(url).host
 
   let lastError: unknown
@@ -81,7 +83,7 @@ export async function politeGet(
     try {
       const res = await fetch(url, {
         signal: controller.signal,
-        redirect: 'follow',
+        redirect,
         headers: {
           'User-Agent': DEFAULT_UA,
           Accept: 'text/html,application/xhtml+xml,application/json;q=0.9,*/*;q=0.8',

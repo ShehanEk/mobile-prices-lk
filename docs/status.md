@@ -3,7 +3,7 @@
 What is live and how it is set up. Update this when something ships or a
 setting moves. Why each choice was made is in [decisions](decisions.md).
 
-Last updated 24 October 2026.
+Last updated 26 October 2026.
 
 ## Live
 
@@ -49,14 +49,33 @@ Last updated 24 October 2026.
 
   The first run left 84 duplicate rows (old warranty class beside the new one);
   they were removed on 2026-10-24, which gives the post-cleanup numbers above.
-- **Not built yet:** the site.
+- **Site (phase 3, built, not deployed):** Next.js 16 pages over the phase 2
+  tables: home, brand lists (`/samsung`), phone pages
+  (`/samsung/samsung-galaxy-s26-ultra-12gb-256gb`), search, price drops,
+  privacy, share images, sitemap, robots, `/api/revalidate`. Reads are cached
+  one entry per brand (tag `catalog`, 30-minute revalidate). Prices older than
+  7 days show as "last seen". Price drops and their nav link appear once a
+  phone qualifies: at least 5% under its 30-day median price, with at least 7
+  days on record. A phone page shows a Specs block when its model
+  is matched on GSMArena ("Specs: GSMArena.com →" links the page); otherwise
+  only "Full specs on GSMArena →" linking its search. Deploying, the domain,
+  GA4 and Search Console are phase 4.
+- **Specs from GSMArena:** `npm run specs`, nightly from the home PC after
+  normalize (`--max-requests 400`), one request every 5 s, stops on
+  403/429/bot check. Models are found on GSMArena's brand lists; its search is
+  behind a bot check.
+- **First specs backfill (2026-10-25/26):** 686 of 834 models matched, 148
+  unmatched (retried after 30 days, or now with `--retry-unmatched`). Three
+  runs: 784 + 132 + 159 requests. 37 spec pages with no specs on them were
+  refetched after the fix that stops storing such a page as matched.
+  Spot check, 20 random matches: 19 / 20 URL slugs name the same phone; 20 / 20 network-consistent.
 
 ## Setup outside the repo
 
 | What | Where | State |
 |---|---|---|
-| Database | Neon project `mobileprices`, AWS us-east-2 (Ohio) | Migrations `0000` (`raw_listings`, `pipeline_runs`, lease indexes) and `0001` applied |
-| Repo | [ShehanEk/mobile-prices-lk](https://github.com/ShehanEk/mobile-prices-lk), public | `main` = planning docs; phase 1 in PR #1 |
+| Database | Neon project `mobileprices`, AWS us-east-2 (Ohio) | Migrations `0000`–`0003` applied |
+| Repo | [ShehanEk/mobile-prices-lk](https://github.com/ShehanEk/mobile-prices-lk), public | PRs #1–#6 merged; `main` has phases 1–2 |
 | Domain | `mobileprices.lk` | Not registered yet |
 
 ## Open items
@@ -67,9 +86,29 @@ Last updated 24 October 2026.
   class. Raise `--limit` or run in slices once `raw_listings` outgrows it.
 - **Dual-network list (`src/normalize/phone.ts`)** needs a check every few
   months: a model newly sold as both 4G and 5G merges until listed.
-- **Query-side staleness.** A listing whose shop stops listing a phone keeps
-  its last price; the site must hide or caption listings older than ~3 days
-  (home-PC shops go stale when the PC is off).
+- **GSMArena on GitHub.** After merge, run `gh workflow run specs.yml -f probe=true`;
+  if it prints `probe: ok`, move the nightly specs run to GitHub (see
+  `.github/workflows/specs.yml`).
+- **A spec page with no specs, an empty list page 1, or a redirect stops
+  every nightly specs run** (exit 1) until someone looks. Symptom:
+  `stopped: HTTP 200 but no specs on a spec page` (or `no phones on a list
+  page`, or `HTTP 301 (a redirect, which is never followed)`) in
+  `logs/nightly-<date>.log`. The log never names the page: the last
+  `matched:` line shows how far the run got, so the model after it is the one
+  to look at on GSMArena. Fix: run `npm run specs -- --probe`. A brand line
+  saying `id DIFFERS` or `BLOCKED` means that brand's list id moved: correct it
+  in `MAKERS` (`src/specs/gsmarena.ts`). If the probe passes, check whether
+  GSMArena's layout changed (`src/specs/gsmarena.ts`); a redirect that comes
+  back on the next night means GSMArena moved a page we fetch. If the probe
+  fails, GSMArena is blocking this machine: wait a day.
+- **12 matched models** have a GSMArena page name that differs from our model
+  name (8 of them Xiaomi). Shehan to eyeball them.
+- **Share-image fonts on the first Vercel deploy.** `src/lib/og.tsx` reads
+  `assets/fonts` via `process.cwd()`; check a share image renders with the
+  fonts once deployed.
+- **Brand colours.** The canvas gave tints for eight brands; the other eight
+  reuse them in order (`src/lib/site.ts`). Pick distinct ones on the canvas if
+  wanted.
 
 - **Reset the Neon password.** The connection string was shared in a chat
   on 2026-10-24. Reset `neondb_owner`'s password in Neon and update
