@@ -109,3 +109,46 @@ test('a Cloudflare Turnstile page is recognised as a bot check', () => {
   )
   assert.equal(isChallenge(MAKER_PAGE), false)
 })
+
+test('a line break inside a list name reads as a space', () => {
+  const page = parseMakerPage(
+    '<div id="list-brands"><div class="general-menu"><ul><li><a href="samsung_galaxy_s24_ultra-90040.php"><strong>Galaxy S24<br>Ultra</strong></a></li></ul></div></div>',
+  )
+  assert.deepEqual(page.candidates, [{ name: 'Galaxy S24 Ultra', path: 'samsung_galaxy_s24_ultra-90040.php' }])
+  assert.equal(pick('Samsung', 'Galaxy S24 Ultra', page.candidates), 'samsung_galaxy_s24_ultra-90040.php')
+})
+
+test('rule 2: a 4G model does not take a 5G-only entry', () => {
+  assert.equal(pick('Samsung', 'Galaxy A16 4G', [{ name: 'Galaxy A16', path: 'samsung_galaxy_a16_5g-90050.php' }]), null)
+})
+
+test('rule 2: a 5G model does not take an entry with no network marker', () => {
+  assert.equal(pick('Samsung', 'Galaxy A16 5G', [{ name: 'Galaxy A16', path: 'samsung_galaxy_a16-90051.php' }]), null)
+})
+
+test('rule 2: the network can come from the name alone', () => {
+  const list: Candidate[] = [
+    { name: 'Galaxy A16 5G', path: 'samsung_galaxy_a16-90052.php' },
+    { name: 'Galaxy A16 4G', path: 'samsung_galaxy_a16-90053.php' },
+  ]
+  assert.equal(pick('Samsung', 'Galaxy A16 5G', list), 'samsung_galaxy_a16-90052.php')
+  assert.equal(pick('Samsung', 'Galaxy A16 4G', list), 'samsung_galaxy_a16-90053.php')
+})
+
+test('rule 1: Nokia models match with either lead word on either side', () => {
+  const nokia = [{ name: 'Nokia G42', path: 'nokia_g42-90060.php' }]
+  const hmd = [{ name: 'HMD G42', path: 'hmd_g42-90061.php' }]
+  assert.equal(pick('Nokia', 'HMD G42', nokia), 'nokia_g42-90060.php')
+  assert.equal(pick('Nokia', 'Nokia G42', hmd), 'hmd_g42-90061.php')
+  assert.equal(pick('Nokia', 'G42', nokia), 'nokia_g42-90060.php')
+})
+
+test('rule 3: the same entry listed twice is still one candidate', () => {
+  const s26 = { name: 'Galaxy S26', path: 'samsung_galaxy_s26-90002.php' }
+  assert.equal(pick('Samsung', 'Galaxy S26', [s26, { ...s26 }]), 'samsung_galaxy_s26-90002.php')
+  assert.equal(pick('Samsung', 'Galaxy A16', [...candidates, ...candidates]), null)
+})
+
+test('a blank spec page has no facts', () => {
+  assert.deepEqual(parseSpecPage(''), { name: '', url: null, mainCamera: null, display: null, network: null, colours: null })
+})

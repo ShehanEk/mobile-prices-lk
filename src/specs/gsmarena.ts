@@ -64,6 +64,8 @@ const text = (s: string) => s.replace(/\s+/g, ' ').trim()
 /** A brand list page: each phone's name and path, newest first, and how many pages the list has. */
 export function parseMakerPage(html: string): { title: string; candidates: Candidate[]; lastPage: number } {
   const $ = cheerio.load(html)
+  // "Galaxy S24<br>Ultra" must read as two words, not "S24Ultra".
+  $('#list-brands br').replaceWith(' ')
   const candidates = $('#list-brands .general-menu li a')
     .toArray()
     .flatMap((a) => {
@@ -142,7 +144,8 @@ function candidateNetwork(c: Candidate): string | null {
 export function pickCandidate(phone: { brand: string; model: string }, candidates: Candidate[]): Candidate | null {
   const want = words(phone.model, phone.brand)
   const net = networkOf(phone.model)
-  const same = candidates.filter((c) => words(c.name, phone.brand) === want)
+  const unique = [...new Map(candidates.map((c) => [c.path, c])).values()]
+  const same = unique.filter((c) => words(c.name, phone.brand) === want)
   const fitting = net === '5' ? same.filter((c) => candidateNetwork(c) === '5') : net === '4' ? same.filter((c) => candidateNetwork(c) !== '5') : same
   const exact = net ? fitting.filter((c) => candidateNetwork(c) === net) : []
   const pool = exact.length > 0 ? exact : fitting
