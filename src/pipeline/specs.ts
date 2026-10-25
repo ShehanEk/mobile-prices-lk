@@ -10,6 +10,7 @@ import {
   makerPageUrl,
   networkContradicts,
   parseMakerPage,
+  parseMakersIndex,
   parseSpecPage,
   pickCandidate,
   type Candidate,
@@ -272,17 +273,23 @@ export async function probeSpecs(log: (m: string) => void = console.log): Promis
     log('probe: FAILED')
     return false
   }
-  const listed = new Map([...index.body.matchAll(/href="([a-z0-9]+)-phones-(\d+)\.php"/g)].map((m) => [m[1], Number(m[2])]))
+  const listed = parseMakersIndex(index.body)
 
   let firstPhone: string | null = null
   for (const [brand, makers] of Object.entries(MAKERS)) {
     for (const maker of makers) {
+      // Read the list at the id the makers page gives, not the configured one: a wrong id
+      // is a redirect to another brand's list, which would stop the probe.
       const id = listed.get(maker.slug)
       const idOk = id === maker.id
       if (!idOk) ok = false
-      const page = await http.get(makerPageUrl(maker, 1))
+      if (id === undefined) {
+        log(`  ${brand} (${maker.slug}-${maker.id}): found on makers page NO`)
+        continue
+      }
+      const page = await http.get(makerPageUrl({ slug: maker.slug, id }, 1))
       if (page.blocked) {
-        log(`  ${brand} (${maker.slug}-${maker.id}): HTTP ${page.status} BLOCKED (${blockReason(page, page.url)})`)
+        log(`  ${brand} (${maker.slug}-${id}): HTTP ${page.status} BLOCKED (${blockReason(page, page.url)})`)
         log('probe: FAILED')
         return false
       }
@@ -291,7 +298,7 @@ export async function probeSpecs(log: (m: string) => void = console.log): Promis
       const phonesOk = parsed.candidates.length > 0
       const pagesOk = !(parsed.lastPage === 1 && parsed.hasNext)
       log(
-        `  ${brand} (${maker.slug}-${maker.id}): HTTP ${page.status}, id on makers page ${yn(idOk)}${idOk ? '' : ` (lists ${id ?? 'none'})`}, ` +
+        `  ${brand} (${maker.slug}-${maker.id}): found yes, id ${idOk ? 'matches' : `DIFFERS (makers page lists ${id})`}, HTTP ${page.status}, ` +
           `title has brand ${yn(titleOk)}, phones ${parsed.candidates.length} (>0 ${yn(phonesOk)}), ` +
           `pages ${parsed.lastPage} (readable ${yn(pagesOk)}), bot check ${isChallenge(page.body) ? 'YES' : 'no'}`,
       )

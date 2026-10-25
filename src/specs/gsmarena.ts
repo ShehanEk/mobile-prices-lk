@@ -42,7 +42,7 @@ export const MAKERS: Record<string, Maker[]> = {
   ZTE: [{ slug: 'zte', id: 62 }],
   Nokia: [
     { slug: 'nokia', id: 1 },
-    { slug: 'hmd', id: 130 },
+    { slug: 'hmd', id: 133 },
   ],
 }
 
@@ -50,6 +50,11 @@ export function makerPageUrl(maker: Maker, page: number): string {
   return page === 1
     ? `${GSMARENA}/${maker.slug}-phones-${maker.id}.php`
     : `${GSMARENA}/${maker.slug}-phones-f-${maker.id}-0-p${page}.php`
+}
+
+/** The makers page: each brand slug's list id, from the `<slug>-phones-<id>.php` links. */
+export function parseMakersIndex(html: string): Map<string, number> {
+  return new Map([...html.matchAll(/href="([a-z0-9]+)-phones-(\d+)\.php"/g)].map((m) => [m[1], Number(m[2])]))
 }
 
 export type Candidate = { name: string; path: string }

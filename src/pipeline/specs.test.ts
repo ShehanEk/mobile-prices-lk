@@ -10,7 +10,7 @@ import { GAP_MS, pacedGetter, readBrandLists, resolveModel, type Page } from './
  * spec pages. Real pages are never stored here or shown to an agent.
  */
 const SAM = { slug: 'samsung', id: 9 }
-const HMD = { slug: 'hmd', id: 130 }
+const HMD = { slug: 'hmd', id: 133 }
 
 function listPage(phones: [name: string, path: string][], current: number, last: number): string {
   const items = phones.map(([n, p]) => `<li><a href="${p}"><strong>${n}</strong></a></li>`).join('')

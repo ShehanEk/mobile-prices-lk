@@ -8,6 +8,7 @@
 -- (functions in index predicate must be marked IMMUTABLE). So this index covers
 -- every kind that has no lease of its own, which today is only 'specs'; a new
 -- kind with its own lease needs to be added to this list in a later migration.
+-- A future kind with its own lease must be added to the NOT IN list below.
 CREATE UNIQUE INDEX "pipeline_runs_active_specs_idx"
   ON "pipeline_runs" ("kind")
   WHERE "status" = 'running' AND "dry_run" = false AND "kind" NOT IN ('scrape', 'normalize');

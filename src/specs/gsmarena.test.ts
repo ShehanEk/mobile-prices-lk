@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { isChallenge, makerPageUrl, networkContradicts, parseMakerPage, parseSpecPage, pickCandidate, type Candidate } from './gsmarena'
+import { isChallenge, makerPageUrl, networkContradicts, parseMakerPage, parseMakersIndex, parseSpecPage, pickCandidate, type Candidate } from './gsmarena'
 
 /*
  * Hand-written pages that copy only the structure of m.gsmarena.com as the
@@ -175,4 +175,14 @@ test('no 4G/5G in the model, or no network on the page, is nothing to contradict
   assert.equal(networkContradicts('Galaxy A57', '4G'), false)
   assert.equal(networkContradicts('Galaxy A16 5G', null), false)
   assert.equal(networkContradicts('Galaxy A16 4G', null), false)
+})
+
+test('the makers page gives each brand slug its list id', () => {
+  const ids = parseMakersIndex(
+    '<table><tr><td><a href="samsung-phones-9.php">Samsung<br><span>1500 devices</span></a></td><td><a href="hmd-phones-90077.php">HMD</a></td></tr></table><a href="makers.php3">All</a><a href="samsung-phones-f-9-0-p2.php">2</a>',
+  )
+  assert.equal(ids.get('samsung'), 9)
+  assert.equal(ids.get('hmd'), 90077)
+  assert.equal(ids.get('nokia'), undefined)
+  assert.equal(ids.size, 2)
 })
