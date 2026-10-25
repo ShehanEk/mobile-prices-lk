@@ -12,7 +12,8 @@ Last updated 24 October 2026.
   - lifemobile, celltronics, geniusmobile and doctormobile from Shehan's PC:
     Windows scheduled task "MobilePrices nightly scrape" runs
     `scripts/nightly-home.cmd` at 01:30, wakes the PC from sleep, and catches
-    up after a missed night. Logs in `logs/nightly-<date>.log`.
+    up after a missed night, then runs normalize so its rows show straight
+    away (since 2026-10-25). Logs in `logs/nightly-<date>.log`.
 - **First real run (2026-10-24):**
 
   | Shop | Rows | With a price | Time |
@@ -29,8 +30,8 @@ Last updated 24 October 2026.
   `price_history`. Rules first; Claude Haiku 5.5 only for warranty text (and
   titles) the rules can't settle, cached in `model_decisions`.
   - Nightly on GitHub Actions at 03:00 Sri Lanka time (`normalize.yml`), after
-    the 01:30 home-PC scrape. Without the `ANTHROPIC_API_KEY` secret it still
-    runs; unclear warranty text shows as not stated.
+    the 01:30 home-PC scrape (GitHub often starts it up to 2 hours late). The
+    `ANTHROPIC_API_KEY` secret is set (2026-10-25).
 - **First normalize run (2026-10-24):** `--redo --max-model-calls 60` over the
   6,900 stored rows (one scrape day, Sri Lanka date).
 
@@ -60,8 +61,6 @@ Last updated 24 October 2026.
 
 ## Open items
 
-- **`ANTHROPIC_API_KEY` GitHub Actions secret.** Add it so the nightly job can
-  ask the model (until then unclear text shows as not stated).
 - **Stale listings after a warranty class change.** Fixed 2026-10-24: normalize now lets the latest-scraped class win per product and deletes the old-class listing and its history on the days written, and the 34 stale rows (plus 8 more from the Genext rule) are gone.
 - **`--redo` reads only the newest 20,000 rows.** Normalize logs a warning when
   it hits the limit; rows beyond it are not re-matched and keep their old

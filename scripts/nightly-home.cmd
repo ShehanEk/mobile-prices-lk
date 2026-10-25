@@ -11,4 +11,8 @@ for %%s in (lifemobile.lk celltronics.lk geniusmobile.lk doctormobile.lk) do (
   echo == %%s %DATE% %TIME% >> "%LOG%"
   call npm run scrape -- %%s >> "%LOG%" 2>&1
 )
+rem Normalize straight away: the PC may scrape after GitHub's 03:00
+rem normalize (asleep or off overnight). Re-runs find nothing new.
+echo == normalize %DATE% %TIME% >> "%LOG%"
+call npm run normalize >> "%LOG%" 2>&1
 echo == done %DATE% %TIME% >> "%LOG%"
