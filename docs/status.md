@@ -55,7 +55,8 @@ Last updated 26 October 2026.
   privacy, share images, sitemap, robots, `/api/revalidate`. Reads are cached
   one entry per brand (tag `catalog`, 30-minute revalidate). Prices older than
   7 days show as "last seen". Price drops and their nav link appear once a
-  phone has 7 days of history. A phone page shows a Specs block when its model
+  phone qualifies: at least 5% under its 30-day median price, with at least 7
+  days on record. A phone page shows a Specs block when its model
   is matched on GSMArena ("Specs: GSMArena.com →" links the page); otherwise
   only "Full specs on GSMArena →" linking its search. Deploying, the domain,
   GA4 and Search Console are phase 4.
@@ -67,13 +68,14 @@ Last updated 26 October 2026.
   unmatched (retried after 30 days, or now with `--retry-unmatched`). Three
   runs: 784 + 132 + 159 requests. 37 spec pages with no specs on them were
   refetched after the fix that stops storing such a page as matched.
+  Spot check, 20 random matches: 19 / 20 URL slugs name the same phone; 20 / 20 network-consistent.
 
 ## Setup outside the repo
 
 | What | Where | State |
 |---|---|---|
 | Database | Neon project `mobileprices`, AWS us-east-2 (Ohio) | Migrations `0000`–`0003` applied |
-| Repo | [ShehanEk/mobile-prices-lk](https://github.com/ShehanEk/mobile-prices-lk), public | `main` = planning docs; phase 1 in PR #1 |
+| Repo | [ShehanEk/mobile-prices-lk](https://github.com/ShehanEk/mobile-prices-lk), public | PRs #1–#6 merged; `main` has phases 1–2 |
 | Domain | `mobileprices.lk` | Not registered yet |
 
 ## Open items
@@ -87,12 +89,18 @@ Last updated 26 October 2026.
 - **GSMArena on GitHub.** After merge, run `gh workflow run specs.yml -f probe=true`;
   if it prints `probe: ok`, move the nightly specs run to GitHub (see
   `.github/workflows/specs.yml`).
-- **A spec page with no specs, or an empty list page 1, stops every nightly
-  specs run** (exit 1) until someone looks. Symptom: `stopped: HTTP 200 but no
-  specs on a spec page` (or `no phones on a list page`) in
-  `logs/nightly-<date>.log`. Fix: run `npm run specs -- --probe`. If it
-  passes, open the page the log names and check whether GSMArena's layout
-  changed (`src/specs/gsmarena.ts`); if it fails, GSMArena is blocking this machine: wait a day.
+- **A spec page with no specs, an empty list page 1, or a redirect stops
+  every nightly specs run** (exit 1) until someone looks. Symptom:
+  `stopped: HTTP 200 but no specs on a spec page` (or `no phones on a list
+  page`, or `HTTP 301 (a redirect, which is never followed)`) in
+  `logs/nightly-<date>.log`. The log never names the page: the last
+  `matched:` line shows how far the run got, so the model after it is the one
+  to look at on GSMArena. Fix: run `npm run specs -- --probe`. A brand line
+  saying `id DIFFERS` or `BLOCKED` means that brand's list id moved: correct it
+  in `MAKERS` (`src/specs/gsmarena.ts`). If the probe passes, check whether
+  GSMArena's layout changed (`src/specs/gsmarena.ts`); a redirect that comes
+  back on the next night means GSMArena moved a page we fetch. If the probe
+  fails, GSMArena is blocking this machine: wait a day.
 - **12 matched models** have a GSMArena page name that differs from our model
   name (8 of them Xiaomi). Shehan to eyeball them.
 - **Share-image fonts on the first Vercel deploy.** `src/lib/og.tsx` reads
