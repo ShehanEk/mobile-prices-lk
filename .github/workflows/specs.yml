@@ -1,0 +1,65 @@
+name: specs
+
+# Phone specs from GSMArena: camera, display, network, colours. One request
+# every 5 s, honest user agent, stops on 403/429, a redirect or a bot check.
+#
+# Manual only for now: the home PC runs it nightly (scripts/nightly-home.cmd),
+# because GSMArena answers that connection (probe, 2026-10-25). If a probe run
+# here prints "probe: ok", add the schedule below and remove the specs lines
+# from nightly-home.cmd (docs/decisions.md, 2026-10-25, GSMArena specs):
+#
+#   schedule:
+#     # 22:30 UTC is 04:00 in Sri Lanka, after normalize (03:00).
+#     - cron: '30 22 * * *'
+on:
+  workflow_dispatch:
+    inputs:
+      probe:
+        description: Only check that GSMArena answers this runner (about 20 requests)
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  specs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    # One run at a time; the lease in pipeline_runs also covers the home PC.
+    concurrency:
+      group: specs
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Probe
+        if: ${{ inputs.probe }}
+        run: npm run specs -- --probe
+
+      - name: Specs
+        if: ${{ !inputs.probe }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        # Without pipefail the exit code is tee's, so a blocked run would show green.
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::DATABASE_URL is not set. Add it under Settings → Secrets and variables → Actions → Secrets."
+            exit 1
+          fi
+          set -o pipefail
+          status=0
+          npm run specs -- --max-requests 1000 2>&1 | tee /tmp/specs.log || status=$?
+          echo "### specs" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          grep -E '^(specs:|skipped:|stopped:)' /tmp/specs.log >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          exit $status

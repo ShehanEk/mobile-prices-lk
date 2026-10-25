@@ -141,6 +141,25 @@ The "Shops" nav link is dropped; the footer lists the six shops. Price drops
 use PCPrice.lk's rule unchanged and appear only once a phone qualifies (about
 a week after launch).
 
+## 2026-10-25 — GSMArena specs: found through brand lists, run from the home PC
+
+GSMArena's search answers our honest bot user agent with a Cloudflare
+Turnstile check; its brand lists and spec pages answer normally (probe from
+Shehan's PC, 2026-10-25). We never get past a bot check, so the specs job
+finds each model on its brand's list (newest first) instead of searching. A
+brand's whole list is read before any model is matched, because "exactly one
+entry fits" needs every entry seen; a list that cannot be read in full marks
+nothing unmatched. A match is dropped when the spec page's 4G/5G contradicts
+the model. Requests are 5 s apart with no retries and no redirects followed;
+403, 429, a redirect or a bot check stops the run. The site's "Full specs on
+GSMArena →" fallback still links to the search, which people can use.
+
+The job runs nightly from the home PC after normalize (`--max-requests 400`).
+If the manual `specs` workflow's probe on GitHub prints `probe: ok`, the
+schedule moves to GitHub and leaves the home script. Test pages are
+hand-written from the markup's structure; real GSMArena pages are not stored
+in the repo or shown to AI.
+
 ## 2026-10-23 — Process carried over from PCPrice.lk
 
 UI is designed on a Claude Design canvas and approved before coding.
