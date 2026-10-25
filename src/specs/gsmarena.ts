@@ -61,8 +61,13 @@ export function isChallenge(html: string): boolean {
 
 const text = (s: string) => s.replace(/\s+/g, ' ').trim()
 
-/** A brand list page: each phone's name and path, newest first, and how many pages the list has. */
-export function parseMakerPage(html: string): { title: string; candidates: Candidate[]; lastPage: number } {
+/**
+ * A brand list page: each phone's name and path, newest first, how many pages
+ * the list has, and whether a link leads on to a later page. The job reads the
+ * page count from page 1 and treats "a next link but a count of 1" as a list it
+ * could not read, rather than as a one-page list.
+ */
+export function parseMakerPage(html: string): { title: string; candidates: Candidate[]; lastPage: number; hasNext: boolean } {
   const $ = cheerio.load(html)
   // "Galaxy S24<br>Ultra" must read as two words, not "S24Ultra".
   $('#list-brands br').replaceWith(' ')
@@ -74,7 +79,11 @@ export function parseMakerPage(html: string): { title: string; candidates: Candi
       return path && name ? [{ name, path }] : []
     })
   const last = $('#last-button').attr('href')?.match(/-p(\d+)\.php$/)
-  return { title: text($('title').first().text()), candidates, lastPage: last ? Number(last[1]) : 1 }
+  const current = Number(text($('#nav-review-page-temp .page .current').first().text())) || 1
+  const hasNext = $('a.prevnextbutton')
+    .toArray()
+    .some((a) => Number($(a).attr('href')?.match(/-p(\d+)\.php$/)?.[1]) > current)
+  return { title: text($('title').first().text()), candidates, lastPage: last ? Number(last[1]) : 1, hasNext }
 }
 
 export type ParsedSpecs = {
@@ -140,7 +149,16 @@ function candidateNetwork(c: Candidate): string | null {
   return fromPath ?? networkOf(c.name)
 }
 
-/** The one GSMArena entry for this brand + model by the rules above, or null. */
+/**
+ * The one GSMArena entry for this brand + model, or null. The rules:
+ *  1. The model's words equal the entry's, after dropping a leading brand word
+ *     (Nokia also drops "HMD"), reading "+" as "plus" and ignoring 4G/5G.
+ *  2. A model that says 5G needs a 5G entry; one that says 4G needs a non-5G
+ *     entry; an entry whose path or name carries the same marker wins over one
+ *     that carries none. A model with no marker takes whatever is listed.
+ *  3. Exactly one entry may be left. The job offers a brand's whole list, so a
+ *     second entry anywhere in it means no match.
+ */
 export function pickCandidate(phone: { brand: string; model: string }, candidates: Candidate[]): Candidate | null {
   const want = words(phone.model, phone.brand)
   const net = networkOf(phone.model)
@@ -150,4 +168,11 @@ export function pickCandidate(phone: { brand: string; model: string }, candidate
   const exact = net ? fitting.filter((c) => candidateNetwork(c) === net) : []
   const pool = exact.length > 0 ? exact : fitting
   return pool.length === 1 ? pool[0] : null
+}
+
+/** A model that says 4G but a page that says 5G (or the reverse) is not the same phone. */
+export function networkContradicts(model: string, network: string | null): boolean {
+  const want = networkOf(model)
+  if (!want || !network) return false
+  return want === '5' ? network !== '5G' : network === '5G'
 }

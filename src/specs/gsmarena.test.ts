@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
-import { isChallenge, makerPageUrl, parseMakerPage, parseSpecPage, pickCandidate, type Candidate } from './gsmarena'
+import { isChallenge, makerPageUrl, networkContradicts, parseMakerPage, parseSpecPage, pickCandidate, type Candidate } from './gsmarena'
 
 /*
  * Hand-written pages that copy only the structure of m.gsmarena.com as the
@@ -151,4 +151,28 @@ test('rule 3: the same entry listed twice is still one candidate', () => {
 
 test('a blank spec page has no facts', () => {
   assert.deepEqual(parseSpecPage(''), { name: '', url: null, mainCamera: null, display: null, network: null, colours: null })
+})
+
+test('page 1 of a longer list has a next link; the last page and a one-page list do not', () => {
+  assert.equal(parseMakerPage(MAKER_PAGE).hasNext, true)
+  const last = `<div id="list-brands"><div class="general-menu"><ul><li><a href="x_y-1.php"><strong>Y</strong></a></li></ul></div></div>
+    <div id="nav-review-page-temp"><div class="page"><span class="current">29</span></div>
+    <a href="samsung-phones-f-9-0-p28.php" class="prevnextbutton"></a></div>`
+  assert.equal(parseMakerPage(last).hasNext, false)
+  assert.equal(parseMakerPage('<div id="list-brands"></div>').hasNext, false)
+})
+
+test('a model that says 4G or 5G is contradicted by a page with the other network', () => {
+  assert.equal(networkContradicts('Galaxy A16 4G', '5G'), true)
+  assert.equal(networkContradicts('Galaxy A16 5G', '4G'), true)
+  assert.equal(networkContradicts('Galaxy A16 5G', '3G'), true)
+  assert.equal(networkContradicts('Galaxy A16 5G', '5G'), false)
+  assert.equal(networkContradicts('Galaxy A16 4G', '4G'), false)
+})
+
+test('no 4G/5G in the model, or no network on the page, is nothing to contradict', () => {
+  assert.equal(networkContradicts('Galaxy A57', '5G'), false)
+  assert.equal(networkContradicts('Galaxy A57', '4G'), false)
+  assert.equal(networkContradicts('Galaxy A16 5G', null), false)
+  assert.equal(networkContradicts('Galaxy A16 4G', null), false)
 })

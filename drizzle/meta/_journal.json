@@ -22,6 +22,13 @@
       "when": 1792945855174,
       "tag": "0002_free_storm",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792946335114,
+      "tag": "0003_specs_lease",
+      "breakpoints": true
     }
   ]
 }
