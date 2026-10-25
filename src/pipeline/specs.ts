@@ -31,6 +31,10 @@ import {
  * matched: "exactly one entry fits" can only be said once every entry has been
  * seen.
  *
+ * Logs (and so pipeline_runs.log_tail and the public Actions log) carry status
+ * codes, host names, counts and our own brand and model only: never a GSMArena
+ * path, name or parsed value.
+ *
  * Idempotent: a matched model is never fetched again (unless it was stored with
  * none of the four facts, which is fetched again); an unmatched one is retried
  * after 30 days (at once with `--retry-unmatched`, after a rule fix); a
@@ -95,7 +99,10 @@ export function pacedGetter(maxRequests: number, gapMs: number = GAP_MS) {
       if (wait > 0) await sleep(wait)
       last = Date.now()
       count++
-      const res = await politeGet(url, { retries: 0, redirect: 'manual' })
+      // politeGet's failure message quotes the URL, which is a GSMArena path: say the host instead.
+      const res = await politeGet(url, { retries: 0, redirect: 'manual' }).catch((err: unknown) => {
+        throw new Error(err instanceof Error ? err.message.replaceAll(url, HOST) : `GET to ${HOST} failed`)
+      })
       return {
         status: res.status,
         body: res.body,
@@ -144,7 +151,7 @@ export async function readBrandLists(makers: Maker[], get: Get): Promise<{ candi
 }
 
 export type Resolution =
-  | { outcome: 'matched'; row: NewPhoneSpecsRow; path: string }
+  | { outcome: 'matched'; row: NewPhoneSpecsRow }
   /** Looked up and nothing fits: stored as unmatched, retried after 30 days. */
   | { outcome: 'unmatched'; why: string }
   /** The page could not be read: stored nothing, wanted again next run. */
@@ -164,11 +171,10 @@ export async function resolveModel(phone: { brand: string; model: string }, cand
     throw new Stop(`HTTP ${page.status} but no specs on a spec page, read as a bot check, from ${HOST}`, true)
   }
   if (networkContradicts(phone.model, specs.network)) {
-    return { outcome: 'unmatched', why: `network on its page (${specs.network}) differs from the model` }
+    return { outcome: 'unmatched', why: 'network on its page differs from the model' }
   }
   return {
     outcome: 'matched',
-    path: c.path,
     row: {
       brand: phone.brand,
       model: phone.model,
@@ -180,6 +186,14 @@ export async function resolveModel(phone: { brand: string; model: string }, cand
       colours: specs.colours,
     },
   }
+}
+
+/** The log line for one resolved model: our brand and model and fixed wording, never anything read from GSMArena. */
+export function outcomeLine(phone: { brand: string; model: string }, r: Resolution): string {
+  const name = `${phone.brand} ${phone.model}`
+  if (r.outcome === 'retry') return `  ${name}: ${r.why}; left for the next run`
+  if (r.outcome === 'unmatched') return `  unmatched: ${name} (${r.why})`
+  return `  matched: ${name}`
 }
 
 export async function runSpecs(opts: SpecsOptions = {}): Promise<SpecsResult> {
@@ -214,7 +228,13 @@ export async function runSpecs(opts: SpecsOptions = {}): Promise<SpecsResult> {
   const save = async (row: NewPhoneSpecsRow) => {
     if (opts.dryRun) return
     const values = { ...row, fetchedAt: new Date() }
-    await db.insert(phoneSpecs).values(values).onConflictDoUpdate({ target: [phoneSpecs.brand, phoneSpecs.model], set: values })
+    try {
+      await db.insert(phoneSpecs).values(values).onConflictDoUpdate({ target: [phoneSpecs.brand, phoneSpecs.model], set: values })
+    } catch (err) {
+      // The driver's error quotes the query parameters, which are the specs just read: keep our name and the SQLSTATE only.
+      const code = (err as { cause?: { code?: string }; code?: string }).cause?.code ?? (err as { code?: string }).code
+      throw new Error(`could not save specs for ${row.brand} ${row.model}${code ? ` (${code})` : ''}`)
+    }
   }
 
   // Every GSMArena fetch goes through here, so a block always ends the run.
@@ -254,17 +274,15 @@ export async function runSpecs(opts: SpecsOptions = {}): Promise<SpecsResult> {
       for (const model of models) {
         const r = await resolveModel({ brand, model }, list.candidates, getOnce)
         if (r.outcome === 'retry') {
-          log(`  ${brand} ${model}: ${r.why}; left for the next run`)
           result.skipped++
         } else if (r.outcome === 'unmatched') {
           await save({ brand, model, matched: false })
           result.unmatched++
-          log(`  unmatched: ${brand} ${model} (${r.why})`)
         } else {
           await save(r.row)
           result.matched++
-          log(`  matched: ${brand} ${model} -> ${r.path}`)
         }
+        log(outcomeLine({ brand, model }, r))
       }
     }
   } catch (err) {

@@ -3,7 +3,7 @@ import { afterEach, test } from 'node:test'
 
 import { makerPageUrl } from '@/specs/gsmarena'
 
-import { GAP_MS, Stop, pacedGetter, readBrandLists, resolveModel, type Page } from './specs'
+import { GAP_MS, Stop, outcomeLine, pacedGetter, readBrandLists, resolveModel, type Page } from './specs'
 
 /*
  * Made-up pages that copy only the structure of m.gsmarena.com's lists and
@@ -100,7 +100,6 @@ test('a model with one candidate is matched with its four facts and source URL',
   const r = await resolveModel({ brand: 'Samsung', model: 'Galaxy A16 5G' }, [A16_5G], site.get)
   assert.deepEqual(r, {
     outcome: 'matched',
-    path: 'samsung_galaxy_a16_5g-7.php',
     row: {
       brand: 'Samsung',
       model: 'Galaxy A16 5G',
@@ -126,7 +125,8 @@ test('a 5G model is rejected as unmatched when its page says 4G', async () => {
   const site = fakeSite({ [specUrl]: ok(specPage('GSM / HSPA / LTE')) })
   const r = await resolveModel({ brand: 'Samsung', model: 'Galaxy A16 5G' }, [A16_5G], site.get)
   assert.equal(r.outcome, 'unmatched')
-  assert.match(r.outcome === 'unmatched' ? r.why : '', /network/)
+  // Fixed wording: the network text on the page never reaches a log.
+  assert.equal(r.outcome === 'unmatched' ? r.why : '', 'network on its page differs from the model')
 })
 
 test('a 4G model is rejected when the page it picked says 5G', async () => {
@@ -208,6 +208,39 @@ test('a 200 page with none of the four facts is a bot check: the run stops and t
     assert.ok(err instanceof Stop)
     assert.equal(err.blocked, true)
     assert.match(err.message, /HTTP 200.*no specs.*m.gsmarena.com/)
+    return true
+  })
+})
+
+// --- nothing from GSMArena in a log line ---------------------------------------
+
+const phone = { brand: 'Samsung', model: 'Galaxy A16 5G' }
+
+test('log lines name our brand and model, never a GSMArena path or page value', async () => {
+  const site = fakeSite({ [specUrl]: ok(specPage('GSM / HSPA / LTE / 5G')) })
+  const matched = await resolveModel(phone, [A16_5G], site.get)
+  assert.equal(outcomeLine(phone, matched), '  matched: Samsung Galaxy A16 5G')
+
+  const lte = fakeSite({ [specUrl]: ok(specPage('GSM / HSPA / LTE')) })
+  const unmatched = await resolveModel(phone, [A16_5G], lte.get)
+  const line = outcomeLine(phone, unmatched)
+  assert.equal(line, '  unmatched: Samsung Galaxy A16 5G (network on its page differs from the model)')
+
+  const down = fakeSite({ [specUrl]: { status: 500, body: '', url: specUrl, blocked: false } })
+  const retry = await resolveModel(phone, [A16_5G], down.get)
+  assert.equal(outcomeLine(phone, retry), '  Samsung Galaxy A16 5G: HTTP 500 on its page; left for the next run')
+
+  for (const l of [outcomeLine(phone, matched), line, outcomeLine(phone, retry)]) assert.doesNotMatch(l, /.php|gsmarena|LTE/i)
+})
+
+test('a failed GSMArena request names the GSMArena host, not the page it asked for', async () => {
+  globalThis.fetch = (async () => {
+    throw new TypeError('fetch failed')
+  }) as typeof fetch
+  await assert.rejects(pacedGetter(5, 0).get('https://f1.example/samsung_galaxy_a16_5g-7.php'), (err: unknown) => {
+    assert.ok(err instanceof Error)
+    assert.match(err.message, /GET m.gsmarena.com failed/)
+    assert.doesNotMatch(err.message, /samsung|.php/)
     return true
   })
 })
