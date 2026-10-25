@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 
 import type { Warranty } from '@/db/schema'
-import { configLabel, dayLabel, isCompany, rupees, sizeLabel } from '@/lib/prices'
+import { cardPrices, configLabel, rupees, sizeLabel } from '@/lib/prices'
 
 /**
  * The filterable list on a brand page, adapted from PCPrice's CategoryList.
@@ -29,8 +29,7 @@ export type BrandRow = {
     shop: string
     warranty: Warranty
     priceLkr: number
-    /** In stock and seen recently. */
-    buyable: boolean
+    inStock: boolean
     /** Not seen for over a week: shown as last seen, never as a current price. */
     stale: boolean
     seenAt: string
@@ -73,9 +72,6 @@ function Chip({ on, label, onChange }: { on: boolean; label: string; onChange: (
   )
 }
 
-/** What a card says about its price: current and in stock, current but out of stock, or only old listings. */
-type Standing = { kind: 'stock' } | { kind: 'out' } | { kind: 'seen'; on: string }
-
 export function BrandList({ rows, shops }: { rows: BrandRow[]; shops: string[] }) {
   const [warranties, setWarranties] = useState<Set<WarrantyFilter>>(new Set(['company', 'shop', 'unstated']))
   const [storage, setStorage] = useState<Set<number>>(new Set())
@@ -97,24 +93,14 @@ export function BrandList({ rows, shops }: { rows: BrandRow[]; shops: string[] }
       if (ram.size && (row.ramGb === null || !ram.has(row.ramGb))) return []
       const offers = row.offers.filter((o) => shopsOn.has(o.shop) && warranties.has(filterOf(o.warranty)))
       if (offers.length === 0) return []
-      const current = offers.filter((o) => !o.stale)
-      const buyable = current.filter((o) => o.buyable)
-      if (inStockOnly && buyable.length === 0) return []
-
-      const lowest = (list: typeof offers) => Math.min(...list.map((o) => o.priceLkr))
-      const company = buyable.filter((o) => isCompany(o.warranty))
-      const newest = offers.reduce((a, b) => (a.seenAt >= b.seenAt ? a : b)).seenAt
-      const standing: Standing = buyable.length
-        ? { kind: 'stock' }
-        : current.length
-          ? { kind: 'out' }
-          : { kind: 'seen', on: dayLabel(newest) }
+      const prices = cardPrices(offers)
+      if (!prices || (inStockOnly && prices.standing.kind !== 'stock')) return []
       return [
         {
           row,
-          standing,
-          price: lowest(buyable.length ? buyable : current.length ? current : offers),
-          company: company.length ? lowest(company) : null,
+          standing: prices.standing,
+          price: prices.overall.priceLkr,
+          company: prices.company,
           shops: new Set(offers.map((o) => o.shop)).size,
         },
       ]
@@ -141,15 +127,17 @@ export function BrandList({ rows, shops }: { rows: BrandRow[]; shops: string[] }
 
   return (
     <div className="flex flex-wrap items-start gap-6 lg:gap-10">
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-controls="filters"
-        onClick={() => setOpen((o) => !o)}
-        className="chip edge-strong inline-flex h-11 cursor-pointer items-center rounded-full px-4 text-[15px] font-semibold lg:hidden"
-      >
-        {open ? 'Hide filters' : 'Filters'}
-      </button>
+      <div className="basis-full lg:hidden">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls="filters"
+          onClick={() => setOpen((o) => !o)}
+          className="chip edge-strong inline-flex h-11 cursor-pointer items-center rounded-full px-4 text-[15px] font-semibold"
+        >
+          {open ? 'Hide filters' : 'Filters'}
+        </button>
+      </div>
 
       <aside id="filters" aria-label="Filters" className={`${open ? 'flex' : 'hidden'} min-w-0 flex-[1_1_240px] flex-col gap-7 lg:flex`}>
         <fieldset className="m-0 border-0 p-0">
@@ -267,7 +255,8 @@ export function BrandList({ rows, shops }: { rows: BrandRow[]; shops: string[] }
                   {p.company !== null && (
                     <span className="flex items-center gap-2 text-[14px] text-accent">
                       <span aria-hidden className="h-2 w-2 rounded-full bg-accent" />
-                      Company warranty from {rupees(p.company)}
+                      Company warranty from {rupees(p.company.priceLkr)}
+                      {p.company.inStock ? '' : ' · out of stock'}
                     </span>
                   )}
                 </Link>

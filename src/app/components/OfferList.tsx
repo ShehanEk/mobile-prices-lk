@@ -3,7 +3,7 @@
 import { useState } from 'react'
 
 import type { Warranty } from '@/db/schema'
-import { WARRANTY_BADGE, isCompany, rupees, type Offer } from '@/lib/prices'
+import { WARRANTY_BADGE, dayLabel, isCompany, rupees, type Offer } from '@/lib/prices'
 
 /**
  * Every price for one phone, each with its warranty badge, and the "Company
@@ -22,7 +22,7 @@ const BADGE: Record<Warranty, string> = {
 }
 
 const live = (o: Offer) => o.inStock && !o.stale
-const stockText = (o: Offer) => (o.stale ? `Last seen ${o.seenOn}` : o.inStock ? 'In stock' : 'Out of stock')
+const stockText = (o: Offer) => (o.stale ? `Last seen ${dayLabel(o.seenAt)}` : o.inStock ? 'In stock' : 'Out of stock')
 const key = (o: Offer) => `${o.shop}|${o.warranty}`
 
 function Badge({ warranty, small = false }: { warranty: Warranty; small?: boolean }) {

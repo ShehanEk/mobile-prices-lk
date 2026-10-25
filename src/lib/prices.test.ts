@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 
 import {
+  cardPrices,
   checkedLabel,
   configLabel,
   dayLabel,
@@ -102,6 +103,53 @@ test('a stale price never holds a headline', () => {
     overall: null,
     company: null,
   })
+})
+
+test('a card prices from the headline rule: in stock beats a cheaper out-of-stock offer, for both lines', () => {
+  const c = cardPrices([
+    offer({ shop: 'a', warranty: 'company', priceLkr: 300000, inStock: false }),
+    offer({ shop: 'b', warranty: 'company', priceLkr: 320000 }),
+    offer({ shop: 'c', warranty: 'shop', priceLkr: 310000 }),
+  ])
+  assert.equal(c?.overall.shop, 'c')
+  assert.equal(c?.company?.shop, 'b')
+  assert.deepEqual(c?.standing, { kind: 'stock' })
+})
+
+test('a card whose only company offer is out of stock still shows that company price, as the phone page does', () => {
+  const offers = [
+    offer({ shop: 'a', warranty: 'company', priceLkr: 330000, inStock: false }),
+    offer({ shop: 'b', warranty: 'shop', priceLkr: 310000 }),
+  ]
+  const c = cardPrices(offers)
+  assert.equal(c?.company?.shop, 'a')
+  assert.equal(c?.company?.inStock, false)
+  assert.deepEqual(c?.standing, { kind: 'stock' })
+  assert.equal(c?.company, headlines(offers).company)
+})
+
+test('a card with nothing in stock says out of stock and prices from the cheapest current offer', () => {
+  const c = cardPrices([
+    offer({ shop: 'a', priceLkr: 340000, inStock: false }),
+    offer({ shop: 'b', priceLkr: 330000, inStock: false }),
+    offer({ shop: 'c', priceLkr: 300000, scrapedAt: daysAgo(10) }),
+  ])
+  assert.equal(c?.overall.shop, 'b')
+  assert.deepEqual(c?.standing, { kind: 'out' })
+})
+
+test('a card with only stale offers is last seen, dated by the offer whose price is shown', () => {
+  const c = cardPrices([
+    offer({ shop: 'a', warranty: 'company', priceLkr: 300000, scrapedAt: daysAgo(10) }),
+    offer({ shop: 'b', priceLkr: 280000, scrapedAt: daysAgo(20) }),
+  ])
+  assert.equal(c?.overall.shop, 'b')
+  assert.deepEqual(c?.standing, { kind: 'seen', on: dayLabel(daysAgo(20).toISOString()) })
+  assert.equal(c?.company, null)
+})
+
+test('a card with no offers has no prices', () => {
+  assert.equal(cardPrices([]), null)
 })
 
 test('the price range spans every current price, out of stock included, stale left out', () => {

@@ -67,7 +67,10 @@ export type PhoneSummary = PhoneRow & {
   checkedAt: string
 }
 
-export type Headlines = { overall: Offer | null; company: Offer | null }
+export type Headlines<T = Offer> = { overall: T | null; company: T | null }
+
+/** What `sortOffers` reads, so the brand-page cards can use it on their slimmer rows. */
+type RankedOffer = Pick<Offer, 'priceLkr' | 'inStock' | 'stale'>
 
 /** One day of the 90-day chart: lowest in-stock price, any warranty and company warranty. */
 export type HistoryPoint = { day: string; anyLkr: number; companyLkr: number | null }
@@ -115,16 +118,34 @@ export function toOffer(row: ListingRow, now: Date): Offer {
 
 export const isCompany = (w: Warranty) => w === 'company' || w === 'apple'
 
-const rank = (o: Offer) => (o.stale ? 2 : o.inStock ? 0 : 1)
+const rank = (o: RankedOffer) => (o.stale ? 2 : o.inStock ? 0 : 1)
 
 /** In stock, then out of stock, then last seen; cheapest first within each. */
-export function sortOffers(offers: Offer[]): Offer[] {
+export function sortOffers<T extends RankedOffer>(offers: T[]): T[] {
   return [...offers].sort((a, b) => rank(a) - rank(b) || a.priceLkr - b.priceLkr)
 }
 
-export function headlines(offers: Offer[]): Headlines {
+export function headlines<T extends RankedOffer & Pick<Offer, 'warranty'>>(offers: T[]): Headlines<T> {
   const current = sortOffers(offers.filter((o) => !o.stale))
   return { overall: current[0] ?? null, company: current.find((o) => isCompany(o.warranty)) ?? null }
+}
+
+/** What a brand-page card says about its price: current and in stock, current but out of stock, or only old listings. */
+export type CardStanding = { kind: 'stock' } | { kind: 'out' } | { kind: 'seen'; on: string }
+
+/**
+ * What a brand-page card shows for the offers still allowed by its filters:
+ * the headline rule of the phone page, so a card never disagrees with it. With
+ * nothing current, the cheapest old offer is shown, last seen on its own date.
+ * `company` is the phone page's company offer, so it may be out of stock.
+ */
+export function cardPrices<T extends RankedOffer & Pick<Offer, 'warranty' | 'seenAt'>>(
+  offers: T[],
+): { overall: T; company: T | null; standing: CardStanding } | null {
+  const { overall, company } = headlines(offers)
+  if (overall) return { overall, company, standing: overall.inStock ? { kind: 'stock' } : { kind: 'out' } }
+  const [oldest] = sortOffers(offers)
+  return oldest ? { overall: oldest, company: null, standing: { kind: 'seen', on: dayLabel(oldest.seenAt) } } : null
 }
 
 /** Every current price, out of stock included ("6 shops · Rs 339,900 to Rs 389,900"). */

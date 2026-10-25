@@ -67,7 +67,7 @@ export default async function BrandPage({ params }: Params) {
       shop: o.shop,
       warranty: o.warranty,
       priceLkr: o.priceLkr,
-      buyable: o.inStock && !o.stale,
+      inStock: o.inStock,
       stale: o.stale,
       seenAt: o.seenAt,
     })),
