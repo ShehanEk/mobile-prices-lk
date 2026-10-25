@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import { TRACKED_SHOPS } from '@/lib/site'
+import { loadDeals } from '@/queries/phones'
 import { SearchBox } from './SearchBox'
 
 /**
@@ -36,8 +37,13 @@ export function Wordmark() {
   )
 }
 
-export function SiteHeader({ current }: { current?: NavKey }) {
-  const links: NavLink[] = [{ key: 'brands', href: '/#brands', label: 'Brands' }]
+export async function SiteHeader({ current }: { current?: NavKey }) {
+  // Price drops appear once a phone qualifies.
+  const hasDeals = (await loadDeals()).length > 0
+  const links: NavLink[] = [
+    { key: 'brands', href: '/#brands', label: 'Brands' },
+    ...(hasDeals ? [{ key: 'deals' as const, href: '/deals', label: 'Price drops' }] : []),
+  ]
 
   const link = (l: NavLink, className: string) => (
     <Link

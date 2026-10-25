@@ -3,7 +3,8 @@ import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 
 import { getDb } from '@/db'
 import { listings, phones, priceHistory } from '@/db/schema'
-import { summarisePhone, toOffer, type HistoryPoint, type Offer, type PhoneSummary } from '@/lib/prices'
+import { findDeals, type Deal } from '@/lib/deals'
+import { summarisePhone, toOffer, type HistoryPoint, type Offer, type PhoneSummary, type PricePoint } from '@/lib/prices'
 import { BRAND_SLUGS, brandFromSlug } from '@/lib/site'
 
 /**
@@ -98,3 +99,37 @@ export async function readPhoneHistory(phoneId: string): Promise<HistoryPoint[]>
 }
 
 export const loadPhoneHistory = unstable_cache(readPhoneHistory, ['phone-history'], CACHE)
+
+/**
+ * The last 31 days of each phone's daily lowest in-stock price (any warranty)
+ * for one brand: what price drops are judged on. Cached per brand like the
+ * directory; 31 days of one number per phone stays far under the entry limit.
+ */
+export async function readLows(brandSlug: string): Promise<Record<string, PricePoint[]>> {
+  const brand = brandFromSlug(brandSlug)
+  if (!brand) return {}
+
+  const rows = await getDb()
+    .select({
+      phoneId: priceHistory.phoneId,
+      day: priceHistory.recordedOn,
+      lowest: sql<string>`min(${priceHistory.priceLkr})`,
+    })
+    .from(priceHistory)
+    .innerJoin(phones, eq(phones.phoneId, priceHistory.phoneId))
+    .where(and(eq(phones.brand, brand), eq(priceHistory.inStock, true), sql`${priceHistory.recordedOn} >= current_date - 31`))
+    .groupBy(priceHistory.phoneId, priceHistory.recordedOn)
+    .orderBy(asc(priceHistory.phoneId), asc(priceHistory.recordedOn))
+
+  const out: Record<string, PricePoint[]> = {}
+  for (const r of rows) (out[r.phoneId] ??= []).push({ day: String(r.day), lowestLkr: Number(r.lowest) })
+  return out
+}
+
+export const loadLows = unstable_cache(readLows, ['brand-lows'], CACHE)
+
+/** Today's price drops across every brand. Computed from cached reads; costs no extra query. */
+export async function loadDeals(): Promise<Deal[]> {
+  const [directory, lows] = await Promise.all([loadDirectory(), Promise.all(BRAND_SLUGS.map((s) => loadLows(s)))])
+  return findDeals(directory, Object.assign({}, ...lows))
+}
