@@ -137,14 +137,19 @@ const LEADS: Record<string, string[]> = { Nokia: ['nokia', 'hmd'] }
 
 function words(name: string, brand: string): string {
   const leads = LEADS[brand] ?? [brand.toLowerCase()]
-  return name
+  const w = name
     .toLowerCase()
+    // As src/normalize/phone.ts spaces our own models: "Flip6" → "Flip 6", "CE3" → "CE 3",
+    // two or more letters only, so "A55" stays one word. Done to both sides.
+    .replace(/\b([a-z]{2,})(\d)/g, '$1 $2')
     .replace(/\+/g, ' plus ')
     .replace(/[^a-z0-9]+/g, ' ')
     .replace(/\b[45]g\b/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
     .replace(new RegExp(`^(?:${leads.join('|')}) `), '')
+  // Our Xiaomi models drop "Mi" before a digit ("Mi 13T" → "13T"); the list may keep it.
+  return brand === 'Xiaomi' ? w.replace(/^mi (?=\d)/, '') : w
 }
 
 const networkOf = (model: string) => model.match(/\b([45])G\b/i)?.[1] ?? null
@@ -156,8 +161,10 @@ function candidateNetwork(c: Candidate): string | null {
 
 /**
  * The one GSMArena entry for this brand + model, or null. The rules:
- *  1. The model's words equal the entry's, after dropping a leading brand word
- *     (Nokia also drops "HMD"), reading "+" as "plus" and ignoring 4G/5G.
+ *  1. The model's words equal the entry's, after splitting a word of two or more
+ *     letters from the digits glued to it ("Flip6" → "Flip 6", as our own models
+ *     are spaced), dropping a leading brand word (Nokia also drops "HMD"; Xiaomi
+ *     models have no "Mi" before a digit), reading "+" as "plus" and ignoring 4G/5G.
  *  2. A model that says 5G needs a 5G entry; one that says 4G needs a non-5G
  *     entry; an entry whose path or name carries the same marker wins over one
  *     that carries none. A model with no marker takes whatever is listed.

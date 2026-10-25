@@ -3,7 +3,7 @@ import { afterEach, test } from 'node:test'
 
 import { makerPageUrl } from '@/specs/gsmarena'
 
-import { GAP_MS, pacedGetter, readBrandLists, resolveModel, type Page } from './specs'
+import { GAP_MS, Stop, pacedGetter, readBrandLists, resolveModel, type Page } from './specs'
 
 /*
  * Made-up pages that copy only the structure of m.gsmarena.com's lists and
@@ -53,10 +53,14 @@ test('a brand with two lists reads both', async () => {
   assert.deepEqual(list.candidates.map((c) => c.path), ['a-1.php', 'b-2.php'])
 })
 
-test('no phones on page 1 is a list that could not be read', async () => {
+test('no phones on page 1 of a 200 list is a bot check: the run stops, with the host and no page text', async () => {
   const site = fakeSite({ [makerPageUrl(SAM, 1)]: ok(listPage([], 1, 1)) })
-  const list = await readBrandLists([SAM], site.get)
-  assert.match(list.failure ?? '', /samsung.*no phones on page 1/)
+  await assert.rejects(readBrandLists([SAM], site.get), (err: unknown) => {
+    assert.ok(err instanceof Stop)
+    assert.equal(err.blocked, true)
+    assert.match(err.message, /HTTP 200.*no phones.*m.gsmarena.com/)
+    return true
+  })
 })
 
 test('a next link with a page count of 1 is a list that could not be read', async () => {
@@ -198,8 +202,12 @@ test('requests are GAP_MS apart', () => {
   assert.equal(GAP_MS, 5000)
 })
 
-test('a 200 page with none of the four facts is retried next run, not stored as matched', async () => {
+test('a 200 page with none of the four facts is a bot check: the run stops and the model stays wanted', async () => {
   const site = fakeSite({ [specUrl]: ok('<html><head><title>Please wait</title></head><body><h1>Samsung Galaxy A16 5G</h1></body></html>') })
-  const r = await resolveModel({ brand: 'Samsung', model: 'Galaxy A16 5G' }, [A16_5G], site.get)
-  assert.equal(r.outcome, 'retry')
+  await assert.rejects(resolveModel({ brand: 'Samsung', model: 'Galaxy A16 5G' }, [A16_5G], site.get), (err: unknown) => {
+    assert.ok(err instanceof Stop)
+    assert.equal(err.blocked, true)
+    assert.match(err.message, /HTTP 200.*no specs.*m.gsmarena.com/)
+    return true
+  })
 })

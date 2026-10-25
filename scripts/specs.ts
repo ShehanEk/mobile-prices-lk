@@ -7,10 +7,11 @@ import { RunInProgressError, detectActor, finishRun, reapStaleRuns, startRun } f
  *   npm run specs                         every model still missing (budget 1,000 requests)
  *   npm run specs -- --max-requests 400   stop after 400 requests (about 35 minutes)
  *   npm run specs -- --dry-run            fetch and log, write nothing
+ *   npm run specs -- --retry-unmatched    also look up unmatched models again now, not only after 30 days
  *   npm run specs -- --probe              does GSMArena answer this machine? (~20 requests, no database)
  *
  * Wrapped in a pipeline_runs row and lease, like scrape and normalize. A
- * 403/429/redirect/bot check stops the run and exits 1, as does a brand whose
+ * 403/429/redirect/bot check (or a 200 page with nothing on it) stops the run and exits 1, as does a brand whose
  * list could not be read, so it shows in the log or the workflow; a used-up
  * budget is a normal stop.
  */
@@ -22,6 +23,7 @@ async function main() {
   const n = i !== -1 ? Number(args[i + 1]) : NaN
   const maxRequests = Number.isFinite(n) && n > 0 ? n : undefined
   const dryRun = args.includes('--dry-run')
+  const retryUnmatched = args.includes('--retry-unmatched')
 
   await reapStaleRuns()
 
@@ -43,7 +45,7 @@ async function main() {
   }
 
   try {
-    const result = await runSpecs({ maxRequests, dryRun, log })
+    const result = await runSpecs({ maxRequests, dryRun, retryUnmatched, log })
     const failed = result.blocked || result.failedBrands.length > 0
     await finishRun(handle, { ok: !failed, result, logTail: lines.join('\n') })
     if (failed) process.exit(1)

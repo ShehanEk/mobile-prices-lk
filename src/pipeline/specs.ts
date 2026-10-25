@@ -23,7 +23,9 @@ import {
  *
  * Conduct (docs/decisions.md, 2026-10-25): one request every 5 s, no retries,
  * no redirects followed, the honest bot user agent from src/lib/http.ts. The run
- * stops on 403, 429, a redirect or a bot check; we never try to get past one.
+ * stops on 403, 429, a redirect or a bot check; we never try to get past one. A
+ * 200 list page 1 with no phones, or a 200 spec page with none of the four facts,
+ * is read as a bot check we do not recognise.
  * GSMArena's search sits behind a bot check, so models are found on the brand's
  * list pages instead, and a brand's whole list is read before any model is
  * matched: "exactly one entry fits" can only be said once every entry has been
@@ -31,14 +33,20 @@ import {
  *
  * Idempotent: a matched model is never fetched again (unless it was stored with
  * none of the four facts, which is fetched again); an unmatched one is retried
- * after 30 days; a model whose page could not be read is still wanted
- * next run. Nothing fetched here is ever sent to Claude.
+ * after 30 days (at once with `--retry-unmatched`, after a rule fix); a
+ * model whose page could not be read is still wanted next run. Nothing fetched here is ever sent to Claude.
  */
 
 export const GAP_MS = 5000
 export const RETRY_AFTER_DAYS = 30
 
-export type SpecsOptions = { maxRequests?: number; dryRun?: boolean; log?: (m: string) => void }
+export type SpecsOptions = {
+  maxRequests?: number
+  dryRun?: boolean
+  /** Also look up unmatched models again now, not only those older than RETRY_AFTER_DAYS. */
+  retryUnmatched?: boolean
+  log?: (m: string) => void
+}
 
 export type SpecsResult = {
   wanted: number
@@ -49,7 +57,7 @@ export type SpecsResult = {
   skipped: number
   /** Brands whose list could not be read (not the ones with no list configured). */
   failedBrands: string[]
-  /** GSMArena answered 403, 429, a redirect or a bot check: the run stopped and failed. */
+  /** GSMArena answered 403, 429, a redirect, a bot check, or a 200 page with nothing on it: the run stopped and failed. */
   blocked: boolean
   stopped: string | null
 }
@@ -58,7 +66,16 @@ export type Page = { status: number; body: string; url: string; blocked: boolean
 export type Get = (url: string) => Promise<Page>
 
 /** The run ends here: the budget is used up, or GSMArena said stop. Not an error. */
-class Stop extends Error {}
+export class Stop extends Error {
+  constructor(
+    message: string,
+    readonly blocked = false,
+  ) {
+    super(message)
+  }
+}
+
+const HOST = new URL(GSMARENA).host
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -108,6 +125,10 @@ export async function readBrandLists(makers: Maker[], get: Get): Promise<{ candi
       const res = await get(makerPageUrl(maker, page))
       if (res.status !== 200) return { candidates, failure: `${maker.slug}: HTTP ${res.status} on page ${page}` }
       const parsed = parseMakerPage(res.body)
+      // A 200 list page with no phones on it is not a list page: read it as a bot check we do not recognise.
+      if (page === 1 && parsed.candidates.length === 0) {
+        throw new Stop(`HTTP ${res.status} but no phones on a list page, read as a bot check, from ${HOST}`, true)
+      }
       if (page === 1) {
         lastPage = parsed.lastPage
         // A next link with a count of 1: the page count did not parse, not a short list.
@@ -138,8 +159,10 @@ export async function resolveModel(phone: { brand: string; model: string }, cand
   if (page.status !== 200) return { outcome: 'retry', why: `HTTP ${page.status} on its page` }
 
   const specs = parseSpecPage(page.body)
-  // A 200 that is not a spec page (an interstitial, a stub): storing it as matched would hide the model's real page.
-  if (!specs.mainCamera && !specs.display && !specs.network && !specs.colours) return { outcome: 'retry', why: 'its page has no specs' }
+  // A 200 that is not a spec page: read it as a bot check we do not recognise. Stop, and leave the model wanted.
+  if (!specs.mainCamera && !specs.display && !specs.network && !specs.colours) {
+    throw new Stop(`HTTP ${page.status} but no specs on a spec page, read as a bot check, from ${HOST}`, true)
+  }
   if (networkContradicts(phone.model, specs.network)) {
     return { outcome: 'unmatched', why: `network on its page (${specs.network}) differs from the model` }
   }
@@ -169,7 +192,7 @@ export async function runSpecs(opts: SpecsOptions = {}): Promise<SpecsResult> {
     from phones p
     left join phone_specs s on s.brand = p.brand and s.model = p.model
     where s.brand is null
-       or (not s.matched and s.fetched_at < now() - make_interval(days => ${RETRY_AFTER_DAYS}))
+       or (not s.matched and (${opts.retryUnmatched === true}::boolean or s.fetched_at < now() - make_interval(days => ${RETRY_AFTER_DAYS})))
        or (s.matched and s.main_camera is null and s.display is null and s.network is null and s.colours is null)
     order by p.brand, p.model
   `)
@@ -197,10 +220,7 @@ export async function runSpecs(opts: SpecsOptions = {}): Promise<SpecsResult> {
   // Every GSMArena fetch goes through here, so a block always ends the run.
   const get: Get = async (url) => {
     const page = await http.get(url)
-    if (page.blocked) {
-      result.blocked = true
-      throw new Stop(blockReason(page, url))
-    }
+    if (page.blocked) throw new Stop(blockReason(page, url), true)
     return page
   }
   // Models of one brand can share a GSMArena page; read it once.
@@ -250,6 +270,7 @@ export async function runSpecs(opts: SpecsOptions = {}): Promise<SpecsResult> {
   } catch (err) {
     if (!(err instanceof Stop)) throw err
     result.stopped = err.message
+    result.blocked = err.blocked
   }
 
   result.requests = http.count

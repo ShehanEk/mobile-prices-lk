@@ -186,3 +186,35 @@ test('the makers page gives each brand slug its list id', () => {
   assert.equal(ids.get('nokia'), undefined)
   assert.equal(ids.size, 2)
 })
+
+test('a name glued to its digits equals the spaced name, as our own models are spaced', () => {
+  const list: Candidate[] = [
+    { name: 'Galaxy Z Flip6', path: 'samsung_galaxy_z_flip6-91001.php' },
+    { name: 'Galaxy A55', path: 'samsung_galaxy_a55_5g-91002.php' },
+    { name: 'Galaxy A5', path: 'samsung_galaxy_a5-91003.php' },
+  ]
+  assert.equal(pick('Samsung', 'Galaxy Z Flip 6', list), 'samsung_galaxy_z_flip6-91001.php')
+  assert.equal(pick('Samsung', 'Galaxy Z Flip6', list), 'samsung_galaxy_z_flip6-91001.php')
+  const spaced: Candidate[] = [{ name: 'Nord CE 3', path: 'oneplus_nord_ce_3-91004.php' }]
+  assert.equal(pick('OnePlus', 'Nord CE3', spaced), 'oneplus_nord_ce_3-91004.php')
+  assert.equal(pick('OnePlus', 'Nord CE 3', [{ name: 'Nord CE3', path: 'oneplus_nord_ce3-91005.php' }]), 'oneplus_nord_ce3-91005.php')
+})
+
+test('single-letter series stay apart: A5 is not A55, and the split does not join words', () => {
+  const list: Candidate[] = [
+    { name: 'Galaxy A55', path: 'samsung_galaxy_a55-91002.php' },
+    { name: 'Galaxy A5', path: 'samsung_galaxy_a5-91003.php' },
+  ]
+  assert.equal(pick('Samsung', 'Galaxy A5', list), 'samsung_galaxy_a5-91003.php')
+  assert.equal(pick('Samsung', 'Galaxy A55', list), 'samsung_galaxy_a55-91002.php')
+  assert.equal(pick('Samsung', 'Galaxy A5', [list[0]]), null)
+  assert.equal(pick('Samsung', 'Galaxy Z Flip 6', [{ name: 'Galaxy Z Flip 60', path: 'x-91006.php' }]), null)
+})
+
+test('Xiaomi: our model drops "Mi" before a digit, so a list name that keeps it still matches', () => {
+  const list: Candidate[] = [{ name: 'Xiaomi Mi 13T', path: 'xiaomi_13t-91007.php' }, { name: 'Mi 9', path: 'xiaomi_mi_9-91008.php' }]
+  assert.equal(pick('Xiaomi', '13T', list), 'xiaomi_13t-91007.php')
+  assert.equal(pick('Xiaomi', '9', list), 'xiaomi_mi_9-91008.php')
+  assert.equal(pick('Xiaomi', 'Mi 9', list), 'xiaomi_mi_9-91008.php')
+  assert.equal(pick('Xiaomi', 'Mi Mix 4', [{ name: 'Mi Mix 4', path: 'xiaomi_mi_mix_4-91009.php' }]), 'xiaomi_mi_mix_4-91009.php')
+})
