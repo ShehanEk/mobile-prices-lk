@@ -118,6 +118,29 @@ in / out). Picking from a supplied list doesn't need a bigger model; estimated
 ~$0.15 for the first run and ~$0.25 a month after. Revisit only if its
 declines or wrong picks show up in the logged decisions.
 
+## 2026-10-25 — Apple warranty counts as company warranty
+
+On iPhone pages, "Apple warranty" prices count toward the "With company
+warranty" headline. The badge reads "Apple warranty" in the company colour.
+
+## 2026-10-25 — Phone specs come from GSMArena, with permission
+
+GSMArena's terms need written permission for use on another site; it was
+given by email on 2026-10-25 (Shehan keeps the email). A nightly job matches
+each model by rules, one request every 5 s, and stores camera, display,
+network and colours. Pages credit GSMArena with a link. Its licence forbids
+feeding its pages to AI, so no GSMArena text goes to Claude.
+
+The open-source [mobile-specs-api](https://github.com/RevengerNick/mobile-specs-api)
+is used only as a parser reference (MIT): running it would add a server that
+scrapes live on every request.
+
+## 2026-10-25 — No Shops page; price drops wait for data
+
+The "Shops" nav link is dropped; the footer lists the six shops. Price drops
+use PCPrice.lk's rule unchanged and appear only once a phone qualifies (about
+a week after launch).
+
 ## 2026-10-23 — Process carried over from PCPrice.lk
 
 UI is designed on a Claude Design canvas and approved before coding.
