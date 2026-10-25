@@ -6,6 +6,7 @@ import {
   configLabel,
   headlines,
   isCompany,
+  phoneDescription,
   priceRange,
   rupees,
   sortOffers,
@@ -147,4 +148,42 @@ test('a phone counts each shop once, however many warranty offers it has there',
   assert.equal(p.overall?.priceLkr, 149988)
   assert.equal(p.company?.priceLkr, 164900)
   assert.equal(p.offers[0].priceLkr, 149988)
+})
+
+const a57 = { phoneId: 'samsung-galaxy-a57-8gb-256gb', brand: 'Samsung', model: 'Galaxy A57', ramGb: 8, storageGb: 256, esimOnly: false }
+
+test('the description leads with the cheapest price and adds the company price once', () => {
+  const p = summarisePhone(a57, 'samsung', [
+    offer({ shop: 'idealz.lk', warranty: 'shop', priceLkr: 149988 }),
+    offer({ shop: 'celltronics.lk', warranty: 'company', priceLkr: 164900 }),
+  ])
+  const { description, lead } = phoneDescription('Samsung A57', p)
+  assert.equal(lead, 'from Rs 149,988 at idealz.lk (shop warranty).')
+  assert.equal(
+    description,
+    'Samsung A57 price in Sri Lanka: from Rs 149,988 at idealz.lk (shop warranty). With company warranty from Rs 164,900. 2 shops compared, updated daily.',
+  )
+})
+
+test('the description does not repeat the price when one offer is both headlines, even as a copy', () => {
+  const p = summarisePhone(a57, 'samsung', [offer({ shop: 'celltronics.lk', warranty: 'company', priceLkr: 164900 })])
+  // The cache hands back copies, so the two headlines are equal but never the same object.
+  const copy = { ...p, company: p.company && { ...p.company } }
+  const { description } = phoneDescription('Samsung Galaxy A57', copy)
+  assert.equal(description.match(/Rs 164,900/g)?.length, 1)
+})
+
+test('the description says so when nothing is current', () => {
+  const p = summarisePhone(a57, 'samsung', [offer({ scrapedAt: daysAgo(30) })])
+  assert.equal(phoneDescription('Samsung Galaxy A57', p).lead, 'no price confirmed this week; last seen prices listed.')
+})
+
+test('the description stays within 155 characters', () => {
+  const p = summarisePhone(a57, 'samsung', [
+    offer({ shop: 'geniusmobile.lk', warranty: 'unstated', priceLkr: 149988 }),
+    offer({ shop: 'celltronics.lk', warranty: 'company', priceLkr: 164900 }),
+  ])
+  const { description } = phoneDescription('Samsung Galaxy S26 Ultra 12 GB · 256 GB · eSIM', p)
+  assert.ok(description.length <= 155, description)
+  assert.ok(description.includes('from Rs 149,988'))
 })

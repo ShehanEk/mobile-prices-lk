@@ -179,3 +179,30 @@ export const WARRANTY_PHRASE: Record<Warranty, string> = {
   shop: 'shop warranty',
   unstated: 'warranty not stated',
 }
+
+/** Equal by what a shopper sees; the cache returns copies, so never compare offers by identity. */
+const sameOffer = (a: Offer, b: Offer) => a.shop === b.shop && a.warranty === b.warranty && a.priceLkr === b.priceLkr
+
+/**
+ * The meta description for a phone page, kept under the ~155 characters Google
+ * shows: the name and the lead always go in, the rest only while it fits.
+ * `lead` is also the share-card description.
+ */
+export function phoneDescription(
+  name: string,
+  phone: Pick<PhoneSummary, 'overall' | 'company' | 'shops'>,
+): { description: string; lead: string } {
+  const { overall, company, shops } = phone
+  const lead = overall
+    ? `from ${rupees(overall.priceLkr)} at ${overall.shop} (${WARRANTY_PHRASE[overall.warranty]}).`
+    : 'no price confirmed this week; last seen prices listed.'
+
+  let description = `${name} price in Sri Lanka: ${lead}`
+  for (const piece of [
+    company && !(overall && sameOffer(company, overall)) ? `With company warranty from ${rupees(company.priceLkr)}.` : '',
+    `${shops} ${shops === 1 ? 'shop' : 'shops'} compared, updated daily.`,
+  ]) {
+    if (piece && description.length + 1 + piece.length <= 155) description += ` ${piece}`
+  }
+  return { description, lead }
+}
