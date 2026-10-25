@@ -2,7 +2,7 @@ import { unstable_cache } from 'next/cache'
 import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 
 import { getDb } from '@/db'
-import { listings, phones, priceHistory } from '@/db/schema'
+import { listings, phoneSpecs, phones, priceHistory } from '@/db/schema'
 import { findDeals, type Deal } from '@/lib/deals'
 import { summarisePhone, toOffer, type HistoryPoint, type Offer, type PhoneSummary, type PricePoint } from '@/lib/prices'
 import { BRAND_SLUGS, brandFromSlug } from '@/lib/site'
@@ -133,3 +133,30 @@ export async function loadDeals(): Promise<Deal[]> {
   const [directory, lows] = await Promise.all([loadDirectory(), Promise.all(BRAND_SLUGS.map((s) => loadLows(s)))])
   return findDeals(directory, Object.assign({}, ...lows))
 }
+
+export type PhoneSpecs = {
+  gsmarenaUrl: string
+  mainCamera: string | null
+  display: string | null
+  network: string | null
+  colours: string | null
+}
+
+/** GSMArena specs for one brand's models, keyed by model. Matched rows only. */
+export async function readSpecs(brandSlug: string): Promise<Record<string, PhoneSpecs>> {
+  const brand = brandFromSlug(brandSlug)
+  if (!brand) return {}
+  const rows = await getDb()
+    .select()
+    .from(phoneSpecs)
+    .where(and(eq(phoneSpecs.brand, brand), eq(phoneSpecs.matched, true)))
+  return Object.fromEntries(
+    rows.flatMap((r) =>
+      r.gsmarenaUrl
+        ? [[r.model, { gsmarenaUrl: r.gsmarenaUrl, mainCamera: r.mainCamera, display: r.display, network: r.network, colours: r.colours }]]
+        : [],
+    ),
+  )
+}
+
+export const loadSpecs = unstable_cache(readSpecs, ['brand-specs'], CACHE)

@@ -5,9 +5,10 @@ import { notFound } from 'next/navigation'
 import { OfferList } from '@/app/components/OfferList'
 import { PriceChart } from '@/app/components/PriceChart'
 import { SiteFooter, SiteHeader } from '@/app/components/SiteChrome'
+import { SpecsBlock } from '@/app/components/SpecsBlock'
 import { checkedLabel, configLabel, phoneDescription, priceRange, rupees, WARRANTY_PHRASE, type Offer } from '@/lib/prices'
 import { SITE_NAME, canonical, phoneName } from '@/lib/site'
-import { findPhone, loadBrand, loadDirectory, loadPhoneHistory } from '@/queries/phones'
+import { findPhone, loadBrand, loadDirectory, loadPhoneHistory, loadSpecs } from '@/queries/phones'
 
 /**
  * A page per phone configuration: /samsung/samsung-galaxy-s26-ultra-12gb-256gb.
@@ -16,7 +17,7 @@ import { findPhone, loadBrand, loadDirectory, loadPhoneHistory } from '@/queries
  * overall (any warranty) and cheapest with company warranty (Apple's own
  * counts). At 375px both sit on the first screen; the company one shrinks to a
  * single row there, as on the canvas's phone board. Then every price with its
- * badge and the 90-day chart.
+ * badge, the 90-day chart and the specs.
  */
 
 export const revalidate = 1800
@@ -137,7 +138,7 @@ export default async function PhonePage({ params }: Params) {
   const phone = await findPhone(brand, phoneId)
   if (!phone) notFound()
 
-  const [siblings, history] = await Promise.all([loadBrand(brand), loadPhoneHistory(phone.phoneId)])
+  const [siblings, history, specs] = await Promise.all([loadBrand(brand), loadPhoneHistory(phone.phoneId), loadSpecs(brand)])
   const configs = siblings
     .filter((p) => p.model === phone.model)
     .sort((a, b) => (a.ramGb ?? 0) - (b.ramGb ?? 0) || a.storageGb - b.storageGb || Number(a.esimOnly) - Number(b.esimOnly))
@@ -249,11 +250,10 @@ export default async function PhonePage({ params }: Params) {
 
         <OfferList offers={phone.offers} />
 
-        {history.length > 1 && (
-          <section aria-label="Price history" className="mt-5 flex flex-wrap gap-6 sm:mt-16">
-            <PriceChart points={history} />
-          </section>
-        )}
+        <section aria-label="Price history and specs" className="mt-5 flex flex-wrap gap-5 sm:mt-16 sm:gap-6">
+          {history.length > 1 && <PriceChart points={history} />}
+          <SpecsBlock brand={phone.brand} model={phone.model} specs={specs[phone.model] ?? null} />
+        </section>
 
         <div className="mt-5 flex flex-col gap-2.5 rounded-3xl bg-panel p-5 sm:hidden">
           <span className="font-display text-[20px] font-bold tracking-[-0.02em]">Why prices differ</span>
