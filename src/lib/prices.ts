@@ -92,8 +92,11 @@ const colomboTime = new Intl.DateTimeFormat('en-GB', {
 /** The calendar day in Sri Lanka, which is what `price_history.recorded_on` holds. */
 export const sriLankaDate = (d: Date) => colomboDate.format(d)
 
+/** "25 Oct", Sri Lanka time. */
+export const dayLabel = (iso: string) => colomboDay.format(new Date(iso))
+
 /** "25 Oct at 03:00", Sri Lanka time. */
-export const checkedLabel = (iso: string) => `${colomboDay.format(new Date(iso))} at ${colomboTime.format(new Date(iso))}`
+export const checkedLabel = (iso: string) => `${dayLabel(iso)} at ${colomboTime.format(new Date(iso))}`
 
 export function toOffer(row: ListingRow, now: Date): Offer {
   const seen = row.scrapedAt instanceof Date ? row.scrapedAt : new Date(row.scrapedAt)

@@ -4,6 +4,7 @@ import { test } from 'node:test'
 import {
   checkedLabel,
   configLabel,
+  dayLabel,
   headlines,
   isCompany,
   phoneDescription,
@@ -131,6 +132,7 @@ test('Sri Lanka dates and the checked label', () => {
   assert.equal(sriLankaDate(new Date('2026-10-24T18:29:00Z')), '2026-10-24')
   assert.equal(sriLankaDate(new Date('2026-10-24T18:31:00Z')), '2026-10-25')
   assert.equal(checkedLabel('2026-10-24T21:30:00.000Z'), '25 Oct at 03:00')
+  assert.equal(dayLabel('2026-10-11T20:00:00.000Z'), '12 Oct')
 })
 
 test('a phone counts each shop once, however many warranty offers it has there', () => {
