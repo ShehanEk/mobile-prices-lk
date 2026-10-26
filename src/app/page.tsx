@@ -65,7 +65,7 @@ function FlagshipTile({ card }: { card: FlagshipCard }) {
         <span className="text-[14px] text-ink-3">{card.configs}</span>
       </span>
       <span className="mt-auto flex flex-col gap-0.5">
-        <span className="text-[13px] text-ink-3">From</span>
+        <span className="text-[13px] text-ink-3">{card.esimOnly ? 'From · eSIM model' : 'From'}</span>
         <span className="whitespace-nowrap font-display text-[28px] font-extrabold tracking-[-0.03em]">{rupees(card.priceLkr)}</span>
       </span>
       <span className="flex items-center justify-between gap-3 border-t border-line-soft pt-3.5 text-[14px] text-ink-2">

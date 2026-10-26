@@ -198,24 +198,26 @@ export type FlagshipCard = {
   priceLkr: number
   /** "3 configurations", or the one configuration's label. */
   configs: string
-  /** Distinct shops with a current offer on any configuration. */
+  /** True when the configuration shown is eSIM only. */
+  esimOnly: boolean
+  /** Distinct shops with it in stock now, on any configuration. */
   shops: number
+  /** "3 shops", or "Out of stock" when no shop has it in stock. */
   shopsLabel: string
 }
 
 /**
  * The home page's flagship cards, in `list` order. A model's price is the best
  * headline across its configurations (in stock beats out of stock, stale never
- * counts); a model with no current price is left out.
+ * counts); a model with no current price is left out. Configurations and shops
+ * are counted the same way: only those with a current price, and in stock.
  */
 export function flagshipCards(phones: PhoneSummary[], list: readonly { brand: string; model: string }[]): FlagshipCard[] {
   return list.flatMap(({ brand, model }) => {
-    const configs = phones.filter((p) => p.brand === brand && p.model === model)
-    const [best] = configs
-      .filter((p) => p.overall)
-      .sort((a, b) => Number(!a.overall!.inStock) - Number(!b.overall!.inStock) || a.overall!.priceLkr - b.overall!.priceLkr)
+    const live = phones.filter((p) => p.brand === brand && p.model === model && p.overall)
+    const [best] = [...live].sort((a, b) => Number(!a.overall!.inStock) - Number(!b.overall!.inStock) || a.overall!.priceLkr - b.overall!.priceLkr)
     if (!best) return []
-    const shops = new Set(configs.flatMap((p) => p.offers.filter((o) => !o.stale).map((o) => o.shop))).size
+    const shops = new Set(live.flatMap((p) => p.offers.filter((o) => o.inStock && !o.stale).map((o) => o.shop))).size
     return [
       {
         brand,
@@ -223,9 +225,10 @@ export function flagshipCards(phones: PhoneSummary[], list: readonly { brand: st
         brandSlug: best.brandSlug,
         phoneId: best.phoneId,
         priceLkr: best.overall!.priceLkr,
-        configs: configs.length === 1 ? configLabel(best) : `${configs.length} configurations`,
+        configs: live.length === 1 ? configLabel(best) : `${live.length} configurations`,
+        esimOnly: best.esimOnly,
         shops,
-        shopsLabel: `${shops} ${shops === 1 ? 'shop' : 'shops'}`,
+        shopsLabel: shops === 0 ? 'Out of stock' : `${shops} ${shops === 1 ? 'shop' : 'shops'}`,
       },
     ]
   })

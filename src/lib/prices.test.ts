@@ -313,3 +313,39 @@ test('a model with one configuration shows its label, and one shop reads "1 shop
   const [esim] = flagshipCards([config('i-256-esim', null, 256, [{ priceLkr: 300000 }], true)], LIST)
   assert.equal(esim.configs, '256 GB · eSIM')
 })
+
+test('a flagship card counts only shops with it in stock now; with none, it reads "Out of stock"', () => {
+  const [some] = flagshipCards(
+    [config('s99-12-256', 12, 256, [{ shop: 'a', priceLkr: 300000 }, { shop: 'b', priceLkr: 290000, inStock: false }])],
+    LIST,
+  )
+  assert.equal(some.shops, 1)
+  assert.equal(some.shopsLabel, '1 shop')
+
+  const [none] = flagshipCards([config('s99-12-256', 12, 256, [{ shop: 'a', priceLkr: 300000, inStock: false }])], LIST)
+  assert.equal(none.priceLkr, 300000)
+  assert.equal(none.shops, 0)
+  assert.equal(none.shopsLabel, 'Out of stock')
+})
+
+test('a flagship card counts only configurations with a current price', () => {
+  const [card] = flagshipCards(
+    [
+      config('s99-12-256', 12, 256, [{ priceLkr: 300000 }]),
+      config('s99-12-512', 12, 512, [{ priceLkr: 100000, scrapedAt: daysAgo(10) }]),
+    ],
+    LIST,
+  )
+  assert.equal(card.configs, '12 GB · 256 GB')
+  assert.equal(card.phoneId, 's99-12-256')
+})
+
+test('a flagship card says when the configuration it shows is eSIM only', () => {
+  const [esim] = flagshipCards(
+    [config('s99-256-esim', null, 256, [{ priceLkr: 300000 }], true), config('s99-512', null, 512, [{ priceLkr: 350000 }])],
+    LIST,
+  )
+  assert.equal(esim.esimOnly, true)
+  const [plain] = flagshipCards([config('s99-256', null, 256, [{ priceLkr: 300000 }])], LIST)
+  assert.equal(plain.esimOnly, false)
+})
