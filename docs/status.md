@@ -60,9 +60,11 @@ Last updated 26 October 2026.
   is matched on GSMArena ("Specs: GSMArena.com →" links the page); otherwise
   only "Full specs on GSMArena →" linking its search. Deploying, the domain,
   GA4 and Search Console are phase 4.
-- **Specs from GSMArena:** `npm run specs`, nightly from the home PC after
-  normalize (`--max-requests 400`), one request every 5 s, stops on
-  403/429/bot check. Models are found on GSMArena's brand lists; its search is
+- **Specs from GSMArena:** `npm run specs`, nightly on GitHub Actions at
+  04:00 Sri Lanka time (`specs.yml`, `--max-requests 1000`; moved from the
+  home PC on 2026-10-26 after a probe passed), one request every 5 s, stops on
+  403/429/redirect/bot check. If GSMArena starts blocking the runners, remove
+  the schedule and run it from `nightly-home.cmd` again. Models are found on GSMArena's brand lists; its search is
   behind a bot check.
 - **First specs backfill (2026-10-25/26):** 686 of 834 models matched, 148
   unmatched (retried after 30 days, or now with `--retry-unmatched`). Three
@@ -75,7 +77,7 @@ Last updated 26 October 2026.
 | What | Where | State |
 |---|---|---|
 | Database | Neon project `mobileprices`, AWS us-east-2 (Ohio) | Migrations `0000`–`0003` applied |
-| Repo | [ShehanEk/mobile-prices-lk](https://github.com/ShehanEk/mobile-prices-lk), public | PRs #1–#6 merged; `main` has phases 1–2 |
+| Repo | [ShehanEk/mobile-prices-lk](https://github.com/ShehanEk/mobile-prices-lk), public | PRs #1–#7 merged; `main` has phases 1–3 |
 | Domain | `mobileprices.lk` | Not registered yet |
 
 ## Open items
@@ -86,9 +88,6 @@ Last updated 26 October 2026.
   class. Raise `--limit` or run in slices once `raw_listings` outgrows it.
 - **Dual-network list (`src/normalize/phone.ts`)** needs a check every few
   months: a model newly sold as both 4G and 5G merges until listed.
-- **GSMArena on GitHub.** After merge, run `gh workflow run specs.yml -f probe=true`;
-  if it prints `probe: ok`, move the nightly specs run to GitHub (see
-  `.github/workflows/specs.yml`).
 - **A spec page with no specs, an empty list page 1, or a redirect stops
   every nightly specs run** (exit 1) until someone looks. Symptom:
   `stopped: HTTP 200 but no specs on a spec page` (or `no phones on a list
