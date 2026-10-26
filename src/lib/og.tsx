@@ -17,7 +17,7 @@ import { brandStyle } from '@/lib/site'
 
 export const OG_SIZE = { width: 1200, height: 630 }
 
-const font = (file: string) => readFile(join(process.cwd(), 'assets/fonts', file))
+export const font = (file: string) => readFile(join(process.cwd(), 'assets/fonts', file))
 
 const fonts = Promise.all([
   font('bricolage-grotesque-latin-700-normal.woff'),
