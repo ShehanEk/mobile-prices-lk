@@ -141,6 +141,14 @@ The "Shops" nav link is dropped; the footer lists the six shops. Price drops
 use PCPrice.lk's rule unchanged and appear only once a phone qualifies (about
 a week after launch).
 
+## 2026-10-26 — Favicon: "m" monogram
+
+Chosen from three options on the [design canvas](https://claude.ai/artifact/5c2UPCMy6WQSiMyJBveBwv)
+(board "Favicon options"): a white Bricolage Grotesque "m" on the ink tile
+(`#1A1F2B`, rounded) with a green (`#3DBA6E`) dot, echoing ".lk" in the
+wordmark. Rendered to PNG, because a favicon can't load web fonts; served as
+`favicon.ico`, the 32 px icon and the 180 px Apple icon.
+
 ## 2026-10-26 — Home v2: latest flagships, no warranty explainer
 
 Approved on the [design canvas](https://claude.ai/artifact/5c2UPCMy6WQSiMyJBveBwv)
