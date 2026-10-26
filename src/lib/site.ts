@@ -63,5 +63,17 @@ export function brandStyle(brand: string): { tint: string; ink: string } {
   return { tint, ink }
 }
 
+/** The home page's "Latest flagships", in card order; edited by hand when new flagships launch. */
+export const FLAGSHIPS = [
+  { brand: 'Apple', model: 'iPhone 17 Pro Max' },
+  { brand: 'Apple', model: 'iPhone 17 Pro' },
+  { brand: 'Apple', model: 'iPhone 17' },
+  { brand: 'Samsung', model: 'Galaxy S26 Ultra' },
+  { brand: 'Samsung', model: 'Galaxy S26' },
+  { brand: 'Samsung', model: 'Galaxy Z Fold 7' },
+  { brand: 'Google', model: 'Pixel 10 Pro' },
+  { brand: 'Google', model: 'Pixel 10' },
+] as const
+
 /** "Samsung Galaxy S26 Ultra": the name people search for. */
 export const phoneName = (p: { brand: string; model: string }) => `${p.brand} ${p.model}`

@@ -141,6 +141,18 @@ The "Shops" nav link is dropped; the footer lists the six shops. Price drops
 use PCPrice.lk's rule unchanged and appear only once a phone qualifies (about
 a week after launch).
 
+## 2026-10-26 — Home v2: latest flagships, no warranty explainer
+
+Approved on the [design canvas](https://claude.ai/artifact/5c2UPCMy6WQSiMyJBveBwv)
+(board "Home v2"). Order: hero, Shop by brand, **Latest flagships**, Below
+their usual price (still hidden until a phone qualifies), footer. The
+"three kinds of warranty" block is removed: every price carries its badge.
+
+"Latest flagships" is a hand-kept list of 8 models in `src/lib/site.ts`,
+edited when new flagships launch, not a "Popular" ranking: there is still no
+data for popularity. Each card shows the model's cheapest current price
+across its configurations and how many shops sell it.
+
 ## 2026-10-26 — The specs job runs nightly on GitHub
 
 The probe on GitHub's runners printed `probe: ok` (all 17 brand lists, no

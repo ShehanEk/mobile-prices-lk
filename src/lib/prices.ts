@@ -188,6 +188,52 @@ export function configLabel(p: { ramGb: number | null; storageGb: number; esimOn
 
 export const rupees = (n: number) => `Rs ${Math.round(n).toLocaleString('en-LK')}`
 
+/** One "Latest flagships" card: a model at its cheapest current configuration. */
+export type FlagshipCard = {
+  brand: string
+  model: string
+  brandSlug: string
+  /** The configuration holding `priceLkr`, which the card links to. */
+  phoneId: string
+  priceLkr: number
+  /** "3 configurations", or the one configuration's label. */
+  configs: string
+  /** True when the configuration shown is eSIM only. */
+  esimOnly: boolean
+  /** Distinct shops with it in stock now, on any configuration. */
+  shops: number
+  /** "3 shops", or "Out of stock" when no shop has it in stock. */
+  shopsLabel: string
+}
+
+/**
+ * The home page's flagship cards, in `list` order. A model's price is the best
+ * headline across its configurations (in stock beats out of stock, stale never
+ * counts); a model with no current price is left out. Configurations and shops
+ * are counted the same way: only those with a current price, and in stock.
+ */
+export function flagshipCards(phones: PhoneSummary[], list: readonly { brand: string; model: string }[]): FlagshipCard[] {
+  return list.flatMap(({ brand, model }) => {
+    const live = phones.filter((p) => p.brand === brand && p.model === model && p.overall)
+    const [best] = [...live].sort((a, b) => Number(!a.overall!.inStock) - Number(!b.overall!.inStock) || a.overall!.priceLkr - b.overall!.priceLkr)
+    if (!best) return []
+    const shops = new Set(live.flatMap((p) => p.offers.filter((o) => o.inStock && !o.stale).map((o) => o.shop))).size
+    return [
+      {
+        brand,
+        model,
+        brandSlug: best.brandSlug,
+        phoneId: best.phoneId,
+        priceLkr: best.overall!.priceLkr,
+        configs: live.length === 1 ? configLabel(best) : `${live.length} configurations`,
+        esimOnly: best.esimOnly,
+        shops,
+        shopsLabel: shops === 0 ? 'Out of stock' : `${shops} ${shops === 1 ? 'shop' : 'shops'}`,
+      },
+    ]
+  })
+}
+
 /** The badge on each price. Apple's own warranty is named, in the company colour. */
 export const WARRANTY_BADGE: Record<Warranty, string> = {
   company: 'Company',

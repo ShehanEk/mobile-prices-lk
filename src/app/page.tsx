@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { SearchBox } from './components/SearchBox'
 import { SiteFooter, SiteHeader } from './components/SiteChrome'
 import { toDealItems, type DealItem } from '@/lib/deals'
-import { rupees, sizeLabel, type PhoneSummary } from '@/lib/prices'
-import { BRAND_SLUGS, TRACKED_SHOPS, brandFromSlug, brandStyle } from '@/lib/site'
+import { flagshipCards, rupees, sizeLabel, type FlagshipCard, type PhoneSummary } from '@/lib/prices'
+import { BRAND_SLUGS, FLAGSHIPS, TRACKED_SHOPS, brandFromSlug, brandStyle } from '@/lib/site'
 import { loadDeals, loadDirectory } from '@/queries/phones'
 
 export const revalidate = 1800
@@ -35,7 +35,7 @@ const shortConfig = (p: PhoneSummary) => (p.ramGb === null ? sizeLabel(p.storage
 function DropCard({ deal }: { deal: DealItem }) {
   const { tint, ink } = brandStyle(deal.brand)
   return (
-    <Link href={`/${deal.brandSlug}/${deal.phoneId}`} className="lift flex min-w-0 flex-[1_1_250px] flex-col overflow-hidden rounded-3xl bg-white shadow-card">
+    <Link href={`/${deal.brandSlug}/${deal.phoneId}`} className="lift flex min-w-0 flex-[1_1_250px] flex-col overflow-hidden rounded-3xl bg-white edge-card">
       <span className="flex h-[104px] items-end justify-between gap-3 p-5" style={{ background: tint, color: ink }}>
         <span className="font-display text-[44px] font-bold leading-[0.9] tracking-[-0.04em]">−{deal.percent}%</span>
         <span className="text-[14px] font-bold">{deal.brand}</span>
@@ -53,16 +53,34 @@ function DropCard({ deal }: { deal: DealItem }) {
   )
 }
 
-const WARRANTY_KINDS = [
-  { title: 'Company warranty', text: 'From the brand’s official agent in Sri Lanka. Usually the highest price.', className: 'bg-company' },
-  { title: 'Shop warranty', text: 'The shop covers it, often 6 months hardware and 1 year software.', className: 'bg-shop' },
-  { title: 'Not stated', text: 'The shop doesn’t say. Ask before you pay.', className: 'edge bg-white' },
-]
+function FlagshipTile({ card }: { card: FlagshipCard }) {
+  const { tint, ink } = brandStyle(card.brand)
+  return (
+    <Link href={`/${card.brandSlug}/${card.phoneId}`} className="lift flex min-w-0 flex-col gap-3.5 rounded-3xl bg-white p-[22px] shadow-card">
+      <span className="inline-flex h-[26px] items-center self-start rounded-full px-2.5 text-[13px] font-bold" style={{ background: tint, color: ink }}>
+        {card.brand}
+      </span>
+      <span className="flex flex-col gap-1">
+        <span className="font-display text-[22px] font-bold leading-[1.1] tracking-[-0.03em]">{card.model}</span>
+        <span className="text-[14px] text-ink-3">{card.configs}</span>
+      </span>
+      <span className="mt-auto flex flex-col gap-0.5">
+        <span className="text-[13px] text-ink-3">{card.esimOnly ? 'From · eSIM model' : 'From'}</span>
+        <span className="whitespace-nowrap font-display text-[28px] font-extrabold tracking-[-0.03em]">{rupees(card.priceLkr)}</span>
+      </span>
+      <span className="flex items-center justify-between gap-3 border-t border-line-soft pt-3.5 text-[14px] text-ink-2">
+        <span>{card.shopsLabel}</span>
+        <span className="go font-semibold text-accent">Compare →</span>
+      </span>
+    </Link>
+  )
+}
 
 export default async function HomePage() {
   const [directory, deals] = await Promise.all([loadDirectory(), loadDeals()])
   const brands = BRAND_SLUGS.filter((s) => directory[s].length > 0)
   const board = cheapestToday(Object.values(directory).flat())
+  const flagships = flagshipCards(Object.values(directory).flat(), FLAGSHIPS)
   const drops = toDealItems(deals).slice(0, 4)
 
   return (
@@ -133,8 +151,24 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {flagships.length > 0 && (
+        <section id="flagships" className="bg-panel">
+          <div className="mx-auto max-w-[1200px] px-4 pb-[72px] pt-16 sm:px-6">
+            <div className="mb-7">
+              <h2 className="m-0 mb-1.5 font-display text-[32px] font-bold tracking-[-0.03em]">Latest flagships</h2>
+              <p className="m-0 text-[16px] text-ink-2">The newest top models from Apple, Samsung and Google, at their lowest price today.</p>
+            </div>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-4">
+              {flagships.map((f) => (
+                <FlagshipTile key={`${f.brand}|${f.model}`} card={f} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {drops.length > 0 && (
-        <section id="drops" className="bg-panel">
+        <section id="drops">
           <div className="mx-auto max-w-[1200px] px-4 py-16 sm:px-6">
             <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
               <div>
@@ -153,27 +187,6 @@ export default async function HomePage() {
           </div>
         </section>
       )}
-
-      <section className="mx-auto max-w-[1200px] px-4 py-16 sm:px-6 sm:py-[72px]">
-        <div className="flex flex-wrap gap-10 rounded-3xl bg-panel p-6 sm:p-12">
-          <div className="min-w-0 flex-[1_1_300px]">
-            <h2 className="m-0 mb-3 font-display text-[30px] font-bold leading-[1.05] tracking-[-0.03em] sm:text-[36px]">
-              The same phone can have three kinds of warranty.
-            </h2>
-            <p className="m-0 text-[16px] leading-[1.55] text-ink-3">
-              That is why prices differ so much between shops. Every price here carries a label, so you know what you are paying for.
-            </p>
-          </div>
-          <div className="flex min-w-0 flex-[2_1_520px] flex-wrap gap-3">
-            {WARRANTY_KINDS.map((k) => (
-              <div key={k.title} className={`flex flex-[1_1_200px] flex-col gap-2 rounded-[20px] p-[22px] ${k.className}`}>
-                <span className="text-[17px] font-bold">{k.title}</span>
-                <span className="text-[15px] leading-normal">{k.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
       <SiteFooter />
     </>
