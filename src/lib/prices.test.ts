@@ -6,6 +6,7 @@ import {
   checkedLabel,
   configLabel,
   dayLabel,
+  flagshipCards,
   headlines,
   isCompany,
   phoneDescription,
@@ -236,4 +237,79 @@ test('the description stays within 155 characters', () => {
   const { description } = phoneDescription('Samsung Galaxy S26 Ultra 12 GB · 256 GB · eSIM', p)
   assert.ok(description.length <= 155, description)
   assert.ok(description.includes('from Rs 149,988'))
+})
+
+const config = (id: string, ramGb: number | null, storageGb: number, offers: Parameters<typeof offer>[0][], esimOnly = false) =>
+  summarisePhone({ phoneId: id, brand: 'Samsung', model: 'Galaxy S99', ramGb, storageGb, esimOnly }, 'samsung', offers.map(offer))
+
+const LIST = [{ brand: 'Samsung', model: 'Galaxy S99' }]
+
+test('a flagship card is the cheapest current price across the model’s configurations, linked to that configuration', () => {
+  const [card] = flagshipCards(
+    [
+      config('s99-12-256', 12, 256, [{ shop: 'a', priceLkr: 300000 }]),
+      config('s99-12-512', 12, 512, [{ shop: 'b', priceLkr: 280000 }]),
+      config('s99-16-1tb', 16, 1024, [{ shop: 'a', priceLkr: 420000 }]),
+    ],
+    LIST,
+  )
+  assert.equal(card.priceLkr, 280000)
+  assert.equal(card.phoneId, 's99-12-512')
+  assert.equal(card.brandSlug, 'samsung')
+  assert.equal(card.configs, '3 configurations')
+})
+
+test('a flagship card prices from an in-stock offer before a cheaper out-of-stock one', () => {
+  const [card] = flagshipCards(
+    [
+      config('s99-12-256', 12, 256, [{ shop: 'a', priceLkr: 250000, inStock: false }]),
+      config('s99-12-512', 12, 512, [{ shop: 'b', priceLkr: 290000 }, { shop: 'c', priceLkr: 270000, inStock: false }]),
+    ],
+    LIST,
+  )
+  assert.equal(card.priceLkr, 290000)
+  assert.equal(card.phoneId, 's99-12-512')
+})
+
+test('a flagship card ignores prices older than 7 days, and counts only shops with a current offer', () => {
+  const [card] = flagshipCards(
+    [
+      config('s99-12-256', 12, 256, [{ shop: 'a', priceLkr: 200000, scrapedAt: daysAgo(9) }, { shop: 'b', priceLkr: 310000 }]),
+      config('s99-12-512', 12, 512, [{ shop: 'c', priceLkr: 330000 }, { shop: 'b', priceLkr: 335000, inStock: false }]),
+    ],
+    LIST,
+  )
+  assert.equal(card.priceLkr, 310000)
+  assert.equal(card.shops, 2)
+  assert.equal(card.shopsLabel, '2 shops')
+})
+
+test('a flagship card counts a shop once across configurations', () => {
+  const [card] = flagshipCards(
+    [
+      config('s99-12-256', 12, 256, [{ shop: 'a', priceLkr: 300000 }, { shop: 'b', priceLkr: 310000 }]),
+      config('s99-12-512', 12, 512, [{ shop: 'a', priceLkr: 340000 }]),
+    ],
+    LIST,
+  )
+  assert.equal(card.shops, 2)
+})
+
+test('a listed model with no current price or no data is skipped; list order is kept', () => {
+  const stale = config('s99-12-256', 12, 256, [{ priceLkr: 100000, scrapedAt: daysAgo(10) }])
+  const pixel = { ...config('p10-8-128', 8, 128, [{ priceLkr: 230000 }]), brand: 'Google', model: 'Pixel 10', brandSlug: 'google' }
+  const cards = flagshipCards([stale, pixel], [LIST[0], { brand: 'Apple', model: 'iPhone 99' }, { brand: 'Google', model: 'Pixel 10' }])
+  assert.deepEqual(cards.map((c) => c.model), ['Pixel 10'])
+  assert.equal(cards[0].brand, 'Google')
+
+  const reversed = flagshipCards([config('s99-12-256', 12, 256, [{ priceLkr: 300000 }]), pixel], [{ brand: 'Google', model: 'Pixel 10' }, LIST[0]])
+  assert.deepEqual(reversed.map((c) => c.model), ['Pixel 10', 'Galaxy S99'])
+})
+
+test('a model with one configuration shows its label, and one shop reads "1 shop"', () => {
+  const [card] = flagshipCards([config('s99-12-256', 12, 256, [{ priceLkr: 300000 }])], LIST)
+  assert.equal(card.configs, '12 GB · 256 GB')
+  assert.equal(card.shopsLabel, '1 shop')
+  const [esim] = flagshipCards([config('i-256-esim', null, 256, [{ priceLkr: 300000 }], true)], LIST)
+  assert.equal(esim.configs, '256 GB · eSIM')
 })
