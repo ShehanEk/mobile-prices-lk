@@ -141,6 +141,14 @@ The "Shops" nav link is dropped; the footer lists the six shops. Price drops
 use PCPrice.lk's rule unchanged and appear only once a phone qualifies (about
 a week after launch).
 
+## 2026-10-26 — The specs job runs nightly on GitHub
+
+The probe on GitHub's runners printed `probe: ok` (all 17 brand lists, no
+bot check), so the nightly specs run moved from the home PC to `specs.yml`
+at 22:30 UTC (04:00 Sri Lanka). Specs now update when the PC is off. If
+GSMArena starts blocking the runners, the run stops itself; the schedule
+then comes out and the specs lines go back into `nightly-home.cmd`.
+
 ## 2026-10-25 — GSMArena specs: found through brand lists, run from the home PC
 
 GSMArena's search answers our honest bot user agent with a Cloudflare
