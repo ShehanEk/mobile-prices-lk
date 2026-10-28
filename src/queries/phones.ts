@@ -14,12 +14,18 @@ import { BRAND_SLUGS, brandFromSlug } from '@/lib/site'
  * toward the 2 MB Next.js allows per entry, and over the limit the write fails
  * silently and the old entry keeps being served: the bug that froze PCPrice.lk's
  * prices. Every entry shares the tag `catalog`, which /api/revalidate clears
- * after the nightly run; otherwise entries expire after 30 minutes.
+ * after the nightly run; otherwise entries expire after a day.
  *
  * Each `read*` is the uncached query; each `load*` is its cached twin.
  */
 
-const CACHE = { revalidate: 1800, tags: ['catalog'] }
+/**
+ * A day. Prices only change when the nightly pipeline runs, and that run clears
+ * `catalog`, so this is a backstop rather than the refresh. At 30 minutes each
+ * refresh re-read the catalogue up to 48 times a day: the pattern that used up
+ * PCPrice.lk's 5 GB of free Neon transfer by 25 October 2026.
+ */
+const CACHE = { revalidate: 86_400, tags: ['catalog'] }
 
 export type Directory = Record<string, PhoneSummary[]>
 

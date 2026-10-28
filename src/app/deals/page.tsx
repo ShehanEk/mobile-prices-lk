@@ -7,9 +7,9 @@ import { toDealItems } from '@/lib/deals'
 import { SITE_NAME, brandStyle, canonical } from '@/lib/site'
 import { loadDeals } from '@/queries/phones'
 
-/** Phones below their usual price. Rebuilt with the catalogue, at most every 30 minutes. */
+/** Phones below their usual price. Rebuilt with the catalogue after each nightly run. */
 
-export const revalidate = 1800
+export const revalidate = 86400
 
 export const metadata: Metadata = {
   title: 'Phone price drops in Sri Lanka',

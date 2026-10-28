@@ -20,7 +20,7 @@ import { findPhone, loadBrand, loadDirectory, loadPhoneHistory, loadSpecs } from
  * badge, the 90-day chart and the specs.
  */
 
-export const revalidate = 1800
+export const revalidate = 86400
 
 type Params = { params: Promise<{ brand: string; phoneId: string }> }
 

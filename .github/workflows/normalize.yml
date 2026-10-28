@@ -66,3 +66,20 @@ jobs:
           if [ "$status" -ne 0 ]; then tail -5 /tmp/normalize.log >> "$GITHUB_STEP_SUMMARY"; fi
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           exit $status
+
+      # Pages and cached reads keep for a day (Neon's free transfer can't take
+      # more frequent refreshes), so this call is what puts the night's prices
+      # on the site. A failure costs freshness, not data; the next run tries again.
+      - name: Clear the site's catalog cache
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          if [ -z "$SITE_URL" ] || [ -z "$REVALIDATE_SECRET" ]; then
+            echo "::warning::SITE_URL (variable) or REVALIDATE_SECRET (secret) is not set. The site serves cached prices for up to a day."
+            exit 0
+          fi
+          code=$(curl -s -o /tmp/revalidate.out -w '%{http_code}' -X POST -H "Authorization: Bearer $REVALIDATE_SECRET" "$SITE_URL/api/revalidate")
+          echo "revalidate -> HTTP $code"
+          cat /tmp/revalidate.out || true
+          [ "$code" = "200" ] || echo "::warning::Cache revalidation failed (HTTP $code)."

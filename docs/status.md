@@ -3,7 +3,7 @@
 What is live and how it is set up. Update this when something ships or a
 setting moves. Why each choice was made is in [decisions](decisions.md).
 
-Last updated 26 October 2026.
+Last updated 29 October 2026.
 
 ## Live
 
@@ -12,8 +12,9 @@ Last updated 26 October 2026.
   - lifemobile, celltronics, geniusmobile and doctormobile from Shehan's PC:
     Windows scheduled task "MobilePrices nightly scrape" runs
     `scripts/nightly-home.cmd` at 01:30, wakes the PC from sleep, and catches
-    up after a missed night, then runs normalize so its rows show straight
-    away (since 2026-10-25). Logs in `logs/nightly-<date>.log`.
+    up after a missed night, then runs normalize so its rows are matched straight
+    away (since 2026-10-25); the site shows them after the 03:00 GitHub run
+    clears the cache. Logs in `logs/nightly-<date>.log`.
 - **First real run (2026-10-24):**
 
   | Shop | Rows | With a price | Time |
@@ -53,7 +54,8 @@ Last updated 26 October 2026.
   tables: home, brand lists (`/samsung`), phone pages
   (`/samsung/samsung-galaxy-s26-ultra-12gb-256gb`), search, price drops,
   privacy, share images, sitemap, robots, `/api/revalidate`. Reads are cached
-  one entry per brand (tag `catalog`, 30-minute revalidate). Prices older than
+  one entry per brand (tag `catalog`, kept a day; the nightly normalize run
+  clears it through `/api/revalidate`). Prices older than
   7 days show as "last seen". Price drops and their nav link appear once a
   phone qualifies: at least 5% under its 30-day median price, with at least 7
   days on record. A phone page shows a Specs block when its model
@@ -79,6 +81,7 @@ Last updated 26 October 2026.
 | Database | Neon project `mobileprices`, AWS us-east-2 (Ohio) | Migrations `0000`–`0003` applied |
 | Repo | [ShehanEk/mobile-prices-lk](https://github.com/ShehanEk/mobile-prices-lk), public | PRs #1–#7 merged; `main` has phases 1–3 |
 | Domain | `mobileprices.lk` | Not registered yet |
+| Nightly cache clearing | GitHub Actions variable `SITE_URL`, secret `REVALIDATE_SECRET`; Vercel `REVALIDATE_SECRET` (Production), same value | Step added to `normalize.yml` 2026-10-29; settings not yet confirmed. A missing setting shows as a warning on the run |
 
 ## Open items
 

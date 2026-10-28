@@ -9,7 +9,7 @@ import { findPhone } from '@/queries/phones'
  * fetched, and prerendering an image per phone would slow every deploy.
  */
 
-export const revalidate = 1800
+export const revalidate = 86400
 export const alt = 'Phone prices in Sri Lanka, with and without company warranty'
 export const size = OG_SIZE
 export const contentType = 'image/png'

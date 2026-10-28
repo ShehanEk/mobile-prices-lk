@@ -169,6 +169,23 @@ at 22:30 UTC (04:00 Sri Lanka). Specs now update when the PC is off. If
 GSMArena starts blocking the runners, the run stops itself; the schedule
 then comes out and the specs lines go back into `nightly-home.cmd`.
 
+## 2026-10-29 — Caches keep a day; the nightly run is the refresh
+
+Pages and `unstable_cache` reads revalidate after 24 hours, not 30 minutes,
+still under the tag `catalog`. `normalize.yml` now ends by calling
+`/api/revalidate` (GitHub variable `SITE_URL`, secret `REVALIDATE_SECRET`),
+which is what puts new prices on the site; until now nothing called it.
+
+**Why.** PCPrice.lk's Neon project was blocked on 25 October for using 5.63 GB
+of the free plan's 5 GB monthly transfer: each 30-minute refresh re-read its
+whole catalogue up to 48 times a day. Prices here also change once a night.
+This project had used 0.39 GB by 29 October; the largest cached entry is
+Samsung's at about 420 KB, well under the 2 MB limit.
+
+**Cost.** If the nightly call fails or its settings are missing, prices lag by
+up to a day (the run logs a warning). Specs written at 04:00 show after the
+next night's call. Every deploy still re-reads the catalogue.
+
 ## 2026-10-25 — GSMArena specs: found through brand lists, run from the home PC
 
 GSMArena's search answers our honest bot user agent with a Cloudflare
