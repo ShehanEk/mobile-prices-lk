@@ -17,8 +17,8 @@ const display = Bricolage_Grotesque({
 /** Running text. */
 const sans = Geist({ subsets: ['latin'], variable: '--font-geist', display: 'swap' })
 
-/** Every page refreshes at most every 30 minutes, or when /api/revalidate clears `catalog`. */
-export const revalidate = 1800
+/** Every page refreshes when the nightly run clears `catalog` via /api/revalidate; a day is the backstop. */
+export const revalidate = 86400
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

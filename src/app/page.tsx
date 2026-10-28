@@ -7,7 +7,7 @@ import { flagshipCards, rupees, sizeLabel, type FlagshipCard, type PhoneSummary 
 import { BRAND_SLUGS, FLAGSHIPS, TRACKED_SHOPS, brandFromSlug, brandStyle } from '@/lib/site'
 import { loadDeals, loadDirectory } from '@/queries/phones'
 
-export const revalidate = 1800
+export const revalidate = 86400
 
 /**
  * "Cheapest today": the four phones the most shops have in stock, one

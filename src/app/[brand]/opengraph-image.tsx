@@ -5,7 +5,7 @@ import { loadBrand, loadDirectory } from '@/queries/phones'
 
 /** The share image for a brand page: how many are in stock, and from what price. */
 
-export const revalidate = 1800
+export const revalidate = 86400
 export const alt = 'Phone prices in Sri Lanka, compared across local shops'
 export const size = OG_SIZE
 export const contentType = 'image/png'

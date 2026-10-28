@@ -1,7 +1,7 @@
 # Architecture (draft)
 
 Same shape as PCPrice.lk: nightly scrape → `raw_listings` → normalize →
-static pages with a 30-minute revalidate, cache cleared by `/api/revalidate`.
+static pages kept a day, cache cleared nightly by `/api/revalidate`.
 Read [PCPrice.lk's architecture](https://github.com/ShehanEk/sl-pc-part-picker/blob/master/docs/architecture.md)
 and [pipeline](https://github.com/ShehanEk/sl-pc-part-picker/blob/master/docs/pipeline.md)
 first. This page lists only what differs.
@@ -107,6 +107,12 @@ and extended:
 
 One "category" (phones) would be one cache entry and risks the 2 MB limit
 that silently froze PCPrice.lk's prices. Cache **per brand** from day one.
+
+Pages and cached reads keep for a day (tag `catalog`). The last step of
+`normalize.yml` calls `/api/revalidate`, which is the routine refresh; the day
+is a backstop. Refreshing every 30 minutes re-read the catalogue up to 48
+times a day and used up PCPrice.lk's free Neon transfer
+([decision](decisions.md#2026-10-29--caches-keep-a-day-the-nightly-run-is-the-refresh)).
 
 ## Hosting and cost
 

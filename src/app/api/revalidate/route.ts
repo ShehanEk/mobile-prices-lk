@@ -3,10 +3,9 @@ import { timingSafeEqual } from 'node:crypto'
 
 /**
  * Lets the nightly pipeline clear the read caches when it finishes. Every
- * cached read (one entry per brand) shares the tag `catalog` with a 30-minute
- * revalidate; without this, fresh prices sit behind a stale cache for up to
- * half an hour after each run. Wiring the calls (REVALIDATE_SECRET, SITE_URL)
- * is phase 4.
+ * cached read (one entry per brand) shares the tag `catalog` and otherwise
+ * keeps for a day, so this call from normalize.yml is what puts new prices on
+ * the site.
  */
 
 function authorized(request: Request): boolean {
