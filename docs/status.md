@@ -12,8 +12,9 @@ Last updated 26 October 2026.
   - lifemobile, celltronics, geniusmobile and doctormobile from Shehan's PC:
     Windows scheduled task "MobilePrices nightly scrape" runs
     `scripts/nightly-home.cmd` at 01:30, wakes the PC from sleep, and catches
-    up after a missed night, then runs normalize so its rows show straight
-    away (since 2026-10-25). Logs in `logs/nightly-<date>.log`.
+    up after a missed night, then runs normalize (since 2026-10-25). Its rows
+    show on the site after GitHub's next normalize clears the cache. Logs in
+    `logs/nightly-<date>.log`.
 - **First real run (2026-10-24):**
 
   | Shop | Rows | With a price | Time |
@@ -53,7 +54,9 @@ Last updated 26 October 2026.
   tables: home, brand lists (`/samsung`), phone pages
   (`/samsung/samsung-galaxy-s26-ultra-12gb-256gb`), search, price drops,
   privacy, share images, sitemap, robots, `/api/revalidate`. Reads are cached
-  one entry per brand (tag `catalog`, 30-minute revalidate). Prices older than
+  one entry per brand (tag `catalog`, no timer: cleared only by GitHub's
+  normalize run, which calls `/api/revalidate` when it finishes; needs the
+  `REVALIDATE_SECRET` secret on GitHub and Vercel). Prices older than
   7 days show as "last seen". Price drops and their nav link appear once a
   phone qualifies: at least 5% under its 30-day median price, with at least 7
   days on record. A phone page shows a Specs block when its model
