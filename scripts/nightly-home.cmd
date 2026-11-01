@@ -12,7 +12,8 @@ for %%s in (lifemobile.lk celltronics.lk geniusmobile.lk doctormobile.lk) do (
   call npm run scrape -- %%s >> "%LOG%" 2>&1
 )
 rem Normalize straight away: the PC may scrape after GitHub's 03:00
-rem normalize (asleep or off overnight). Re-runs find nothing new.
+rem normalize (asleep or off overnight). Re-runs find nothing new. This
+rem never clears the site's cache; only GitHub's normalize run does.
 echo == normalize %DATE% %TIME% >> "%LOG%"
 call npm run normalize >> "%LOG%" 2>&1
 echo == done %DATE% %TIME% >> "%LOG%"

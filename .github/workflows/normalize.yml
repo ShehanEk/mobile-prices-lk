@@ -66,3 +66,16 @@ jobs:
           if [ "$status" -ne 0 ]; then tail -5 /tmp/normalize.log >> "$GITHUB_STEP_SUMMARY"; fi
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           exit $status
+
+      # The one place the site's cache is cleared: pages have no timer, so
+      # Vercel rebuilds them once a night, after the prices change. Skipped when
+      # normalize fails. Change the URL when mobileprices.lk goes live.
+      - name: Clear the site cache
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          if [ -z "$REVALIDATE_SECRET" ]; then
+            echo "::error::REVALIDATE_SECRET is not set, so the site keeps the previous prices. Add it under Settings → Secrets and variables → Actions → Secrets, with the same value as on Vercel."
+            exit 1
+          fi
+          curl -fsS -X POST -H "Authorization: Bearer $REVALIDATE_SECRET" https://mobile-prices-lk.vercel.app/api/revalidate

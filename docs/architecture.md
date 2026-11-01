@@ -1,7 +1,8 @@
 # Architecture (draft)
 
 Same shape as PCPrice.lk: nightly scrape → `raw_listings` → normalize →
-static pages with a 30-minute revalidate, cache cleared by `/api/revalidate`.
+static pages with no timed revalidate, cache cleared by `/api/revalidate`
+only when GitHub's normalize run finishes.
 Read [PCPrice.lk's architecture](https://github.com/ShehanEk/sl-pc-part-picker/blob/master/docs/architecture.md)
 and [pipeline](https://github.com/ShehanEk/sl-pc-part-picker/blob/master/docs/pipeline.md)
 first. This page lists only what differs.

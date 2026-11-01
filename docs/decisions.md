@@ -174,7 +174,18 @@ then comes out and the specs lines go back into `nightly-home.cmd`.
 `vercel.json` sets `git.deploymentEnabled: false`: pushes and merges no
 longer deploy, preview or production. Shehan deploys by hand from the Vercel
 dashboard. Prices are unaffected: the site reads the database, so nightly
-data still shows within 30 minutes; only code changes wait for a deploy.
+data still shows after the cache clear below; only code changes wait for a
+deploy.
+
+## 2026-11-01 — The site's cache is cleared only when GitHub's normalize finishes
+
+To keep Vercel costs down, pages and cached reads have no timer
+(`revalidate = false`; it was 30 minutes, which rebuilt visited pages all day
+for prices that change once a night). `normalize.yml` calls
+`/api/revalidate` as its last step; nothing else clears the cache, the home
+PC's normalize included. The cost: rows the PC scrapes after GitHub's 03:00
+normalize show the next night, unless the normalize workflow is run by hand.
+No routine deploys, redeploys, cache clears or live-site checks.
 
 ## 2026-10-25 — GSMArena specs: found through brand lists, run from the home PC
 

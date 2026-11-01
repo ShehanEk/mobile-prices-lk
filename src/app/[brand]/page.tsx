@@ -13,7 +13,7 @@ import { loadBrand, loadDirectory } from '@/queries/phones'
  * phone price sri lanka") and are the crawl path to every phone page.
  */
 
-export const revalidate = 1800
+export const revalidate = false
 
 type Params = { params: Promise<{ brand: string }> }
 

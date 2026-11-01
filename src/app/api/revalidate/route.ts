@@ -2,11 +2,10 @@ import { revalidateTag } from 'next/cache'
 import { timingSafeEqual } from 'node:crypto'
 
 /**
- * Lets the nightly pipeline clear the read caches when it finishes. Every
- * cached read (one entry per brand) shares the tag `catalog` with a 30-minute
- * revalidate; without this, fresh prices sit behind a stale cache for up to
- * half an hour after each run. Wiring the calls (REVALIDATE_SECRET, SITE_URL)
- * is phase 4.
+ * The only way the site's cache is cleared. GitHub's nightly normalize run
+ * (`normalize.yml`) calls it when it finishes; every page and cached read
+ * shares the tag `catalog` and has no timer, so without this call the site
+ * keeps showing the previous prices.
  */
 
 function authorized(request: Request): boolean {
