@@ -169,6 +169,13 @@ at 22:30 UTC (04:00 Sri Lanka). Specs now update when the PC is off. If
 GSMArena starts blocking the runners, the run stops itself; the schedule
 then comes out and the specs lines go back into `nightly-home.cmd`.
 
+## 2026-11-01 — No automatic Vercel deployments
+
+`vercel.json` sets `git.deploymentEnabled: false`: pushes and merges no
+longer deploy, preview or production. Shehan deploys by hand from the Vercel
+dashboard. Prices are unaffected: the site reads the database, so nightly
+data still shows within 30 minutes; only code changes wait for a deploy.
+
 ## 2026-10-25 — GSMArena specs: found through brand lists, run from the home PC
 
 GSMArena's search answers our honest bot user agent with a Cloudflare
