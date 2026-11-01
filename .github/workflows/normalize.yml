@@ -69,13 +69,14 @@ jobs:
 
       # The one place the site's cache is cleared: pages have no timer, so
       # Vercel rebuilds them once a night, after the prices change. Skipped when
-      # normalize fails. Change the URL when mobileprices.lk goes live.
+      # normalize fails.
       - name: Clear the site cache
         env:
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+          SITE_URL: ${{ secrets.SITE_URL }}
         run: |
-          if [ -z "$REVALIDATE_SECRET" ]; then
-            echo "::error::REVALIDATE_SECRET is not set, so the site keeps the previous prices. Add it under Settings → Secrets and variables → Actions → Secrets, with the same value as on Vercel."
+          if [ -z "$REVALIDATE_SECRET" ] || [ -z "$SITE_URL" ]; then
+            echo "::error::REVALIDATE_SECRET or SITE_URL is not set, so the site keeps the previous prices. Add them under Settings → Secrets and variables → Actions → Secrets; REVALIDATE_SECRET must match Vercel's."
             exit 1
           fi
-          curl -fsS -X POST -H "Authorization: Bearer $REVALIDATE_SECRET" https://mobile-prices-lk.vercel.app/api/revalidate
+          curl -fsS -X POST -H "Authorization: Bearer $REVALIDATE_SECRET" "${SITE_URL%/}/api/revalidate"
