@@ -13,13 +13,14 @@ import { BRAND_SLUGS, brandFromSlug } from '@/lib/site'
  * Cached one entry per brand from day one. A single entry for every phone grows
  * toward the 2 MB Next.js allows per entry, and over the limit the write fails
  * silently and the old entry keeps being served: the bug that froze PCPrice.lk's
- * prices. Every entry shares the tag `catalog`, which /api/revalidate clears
- * after the nightly run; otherwise entries expire after 30 minutes.
+ * prices. Every entry shares the tag `catalog` and never expires on a timer:
+ * /api/revalidate clears it once a night, after GitHub's normalize run, so
+ * Vercel rebuilds pages only when prices have changed.
  *
  * Each `read*` is the uncached query; each `load*` is its cached twin.
  */
 
-const CACHE = { revalidate: 1800, tags: ['catalog'] }
+const CACHE = { revalidate: false as const, tags: ['catalog'] }
 
 export type Directory = Record<string, PhoneSummary[]>
 
