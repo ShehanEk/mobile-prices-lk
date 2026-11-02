@@ -187,6 +187,11 @@ PC's normalize included. The cost: rows the PC scrapes after GitHub's 03:00
 normalize show the next night, unless the normalize workflow is run by hand.
 No routine deploys, redeploys, cache clears or live-site checks.
 
+## 2026-11-02 — Home: price drops before flagships
+
+"Below their usual price" now sits above "Latest flagships", changing the
+order set in Home v2. Still hidden until a phone qualifies.
+
 ## 2026-10-25 — GSMArena specs: found through brand lists, run from the home PC
 
 GSMArena's search answers our honest bot user agent with a Cloudflare

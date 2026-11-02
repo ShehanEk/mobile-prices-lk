@@ -151,22 +151,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {flagships.length > 0 && (
-        <section id="flagships" className="bg-panel">
-          <div className="mx-auto max-w-[1200px] px-4 pb-[72px] pt-16 sm:px-6">
-            <div className="mb-7">
-              <h2 className="m-0 mb-1.5 font-display text-[32px] font-bold tracking-[-0.03em]">Latest flagships</h2>
-              <p className="m-0 text-[16px] text-ink-2">The newest top models from Apple, Samsung and Google, at their lowest price today.</p>
-            </div>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-4">
-              {flagships.map((f) => (
-                <FlagshipTile key={`${f.brand}|${f.model}`} card={f} />
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
-
       {drops.length > 0 && (
         <section id="drops">
           <div className="mx-auto max-w-[1200px] px-4 py-16 sm:px-6">
@@ -182,6 +166,22 @@ export default async function HomePage() {
             <div className="flex flex-wrap gap-4">
               {drops.map((d) => (
                 <DropCard key={d.phoneId} deal={d} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {flagships.length > 0 && (
+        <section id="flagships" className="bg-panel">
+          <div className="mx-auto max-w-[1200px] px-4 pb-[72px] pt-16 sm:px-6">
+            <div className="mb-7">
+              <h2 className="m-0 mb-1.5 font-display text-[32px] font-bold tracking-[-0.03em]">Latest flagships</h2>
+              <p className="m-0 text-[16px] text-ink-2">The newest top models from Apple, Samsung and Google, at their lowest price today.</p>
+            </div>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-4">
+              {flagships.map((f) => (
+                <FlagshipTile key={`${f.brand}|${f.model}`} card={f} />
               ))}
             </div>
           </div>
