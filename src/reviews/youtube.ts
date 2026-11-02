@@ -32,22 +32,32 @@ export type Candidate = Model & {
 /** Words that make a different phone: "Galaxy S26 FE" is not a "Galaxy S26". */
 const VARIANTS = new Set(['pro', 'max', 'ultra', 'plus', 'fe', 'mini', 'lite', 'air', 'neo', 'edge', 'fold', 'flip', 'se', 'turbo', 'prime'])
 const NETWORKS = new Set(['4g', '5g'])
+/** Product lines that name the phone alone. Any other model needs its brand right before it: "14" is not a phone without "Xiaomi". */
+const SELF_NAMED = new Set(['iphone', 'pixel', 'galaxy', 'redmi', 'poco', 'moto', 'hmd', 'nubia', 'nord', 'reno', 'camon', 'pova', 'cmf'])
+/** A further model code: "HMD Fusion X1" is not an "HMD Fusion". Years and memory sizes don't count. */
+const MODEL_CODE = /^(?!20\d\d$)(?!\d+gb$)[a-z]{0,2}\d+[a-z]?$/
 
 const tokens = (s: string) =>
   s
     .toLowerCase()
+    .replace(/one[ -]?plus/g, 'oneplus')
     .replaceAll('+', ' plus ')
     .split(/[^a-z0-9]+/)
     .filter(Boolean)
 
-function indexOfRun(haystack: string[], needle: string[]): number {
+function runsOf(haystack: string[], needle: string[]): number[] {
+  const at: number[] = []
   for (let i = 0; i + needle.length <= haystack.length; i++) {
-    if (needle.every((t, j) => haystack[i + j] === t)) return i
+    if (needle.every((t, j) => haystack[i + j] === t)) at.push(i)
   }
-  return -1
+  return at
 }
 
-/** The one model a video reviews, or null. The model with the most words wins, so "S26 Ultra" beats "S26". */
+/**
+ * The one model a video reviews, or null. The earliest in the title wins, since
+ * rivals come later ("Magic V5 Review | Z Fold 7 Destroyed?"), then the one with
+ * the most words.
+ */
 export function matchModel<T extends Model>(title: string, models: T[]): T | null {
   const t = tokens(title)
   if (!t.includes('review') || t.includes('shorts') || t.includes('vs') || t.includes('versus') || t.includes('comparison')) return null
@@ -60,17 +70,20 @@ export function matchModel<T extends Model>(title: string, models: T[]): T | nul
   const key = (core: string[]) => core.join(' ')
 
   const fits = parsed
-    .filter(({ core, network }) => {
-      const at = indexOfRun(t, core)
-      if (at === -1) return false
-      const next = t[at + core.length]
-      if (next !== undefined && VARIANTS.has(next)) return false
+    .flatMap(({ m, core, network }) => {
+      const brand = tokens(m.brand)[0]
       const sold = (n: string | null) => parsed.some((p) => key(p.core) === key(core) && p.network === n)
-      if (next !== undefined && NETWORKS.has(next)) return next === network || (network === null && !sold(next))
-      // No network in the title: it means the plain model when one is sold, else this one.
-      return network === null || !sold(null)
+      const at = runsOf(t, core).find((i) => {
+        if (core[0] !== brand && !SELF_NAMED.has(core[0]) && t[i - 1] !== brand) return false
+        const next = t[i + core.length]
+        if (next !== undefined && NETWORKS.has(next)) return next === network || (network === null && !sold(next))
+        if (next !== undefined && (VARIANTS.has(next) || MODEL_CODE.test(next))) return false
+        // No network in the title: it means the plain model when one is sold, else this one.
+        return network === null || !sold(null)
+      })
+      return at === undefined ? [] : [{ m, at, words: core.length }]
     })
-    .sort((a, b) => b.core.length - a.core.length)
+    .sort((a, b) => a.at - b.at || b.words - a.words)
 
   return fits[0]?.m ?? null
 }
