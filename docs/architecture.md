@@ -104,6 +104,16 @@ and extended:
   key degrades the run (rows stay unmatched), never fails it.
 - Model: Claude Haiku 5.5 (`claude-haiku-5-5`); see [decisions](decisions.md).
 
+## Shop profiles
+
+| Module | Does |
+|---|---|
+| `src/lib/shops.ts` | Hand-kept config per tracked shop: website, branches, review notes ([runbook](shop-reviews.md)) |
+| `src/lib/shop-stats.ts` | Pure stats from the cached directory: phones listed, % in stock, how often cheapest |
+| `src/app/components/ShopProfiles.tsx` | Server component: the home page's sideways row of cards |
+
+No new query or cache entry: the stats reuse `loadDirectory`.
+
 ## Rendering and caching
 
 One "category" (phones) would be one cache entry and risks the 2 MB limit

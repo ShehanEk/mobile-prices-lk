@@ -1,9 +1,11 @@
 import Link from 'next/link'
 
 import { SearchBox } from './components/SearchBox'
+import { ShopProfiles } from './components/ShopProfiles'
 import { SiteFooter, SiteHeader } from './components/SiteChrome'
 import { toDealItems, type DealItem } from '@/lib/deals'
 import { flagshipCards, rupees, sizeLabel, type FlagshipCard, type PhoneSummary } from '@/lib/prices'
+import { shopStats } from '@/lib/shop-stats'
 import { BRAND_SLUGS, FLAGSHIPS, TRACKED_SHOPS, brandFromSlug, brandStyle } from '@/lib/site'
 import { loadDeals, loadDirectory } from '@/queries/phones'
 
@@ -82,6 +84,7 @@ export default async function HomePage() {
   const board = cheapestToday(Object.values(directory).flat())
   const flagships = flagshipCards(Object.values(directory).flat(), FLAGSHIPS)
   const drops = toDealItems(deals).slice(0, 4)
+  const stats = shopStats(Object.values(directory).flat(), TRACKED_SHOPS)
 
   return (
     <>
@@ -187,6 +190,8 @@ export default async function HomePage() {
           </div>
         </section>
       )}
+
+      <ShopProfiles stats={stats} />
 
       <SiteFooter />
     </>

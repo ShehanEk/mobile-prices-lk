@@ -215,6 +215,29 @@ only" switch; a line under the list says out-of-stock and last-seen prices
 never count. Share images, brand cards and search descriptions still use both
 prices.
 
+## 2026-11-03 — Shop profiles on the home page
+
+Approved on the [design canvas](https://claude.ai/artifact/5c2UPCMy6WQSiMyJBveBwv)
+(boards "Shop profiles"). Ported from PCPrice.lk by hand. A sideways row of shop
+cards is the last home section, above the footer, so phones come first. No section
+was removed, and the 2026-10-25 "no Shops page" decision stands: no page or nav
+link. Each card has the shop's links and branches, three numbers from our own
+listings, and up to 5 review notes in `src/lib/shops.ts`, refreshed by hand every 3
+months (`docs/shop-reviews.md`). No auto-rotate, no new table, no recurring AI cost.
+
+Numbers count phone configurations, not listings, so a phone sold under two
+warranties counts once. Cheapest compares any warranty, as "Cheapest overall" does.
+A shop whose listings are all stale shows "–", because a stopped sync says nothing
+about the shop.
+
+"Genuine products" from PCPrice.lk is "Genuine phones" here. It also covers official
+versus grey imports, and Warranty also covers company versus shop terms.
+
+**Deliberate risk.** Google's terms restrict content derived from its reviews.
+Reading them by hand each quarter and publishing only our own short summary, a
+count and a link back was chosen knowingly. The Places API was rejected on
+PCPrice.lk because it returns about 5 reviews per place.
+
 ## 2026-10-25 — GSMArena specs: found through brand lists, run from the home PC
 
 GSMArena's search answers our honest bot user agent with a Cloudflare
