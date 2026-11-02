@@ -4,6 +4,7 @@ import { and, eq, isNull, lt, sql } from 'drizzle-orm'
 import { getDb } from '@/db'
 import { pipelineRuns } from '@/db/schema'
 import type { NormalizeResult } from './normalize'
+import type { ReviewsResult } from './reviews'
 import type { RunResult } from './scrape'
 import type { SpecsResult } from './specs'
 
@@ -61,7 +62,7 @@ function isUniqueViolation(err: unknown): boolean {
 }
 
 export type StartOptions = {
-  kind: 'scrape' | 'normalize' | 'specs'
+  kind: 'scrape' | 'normalize' | 'specs' | 'reviews'
   shop?: string
   actor?: Actor
   dryRun?: boolean
@@ -103,7 +104,7 @@ export async function startRun(opts: StartOptions): Promise<RunHandle | null> {
 
 export type FinishOptions = {
   ok: boolean
-  result?: RunResult | NormalizeResult | SpecsResult
+  result?: RunResult | NormalizeResult | SpecsResult | ReviewsResult
   error?: unknown
   logTail?: string
 }
@@ -135,7 +136,7 @@ export async function finishRun(
         scraped: scrape?.scraped ?? null,
         inserted: scrape?.inserted ?? null,
         withPrice: scrape?.withPrice ?? null,
-        stats: !isScrape && opts.result ? (opts.result as NormalizeResult | SpecsResult) : null,
+        stats: !isScrape && opts.result ? (opts.result as NormalizeResult | SpecsResult | ReviewsResult) : null,
         // First line only: the useful part of an assertPlausible throw is its
         // first sentence, and the rest is a stack nobody reads from a table.
         error: message ? message.split('\n')[0].slice(0, 2000) : null,

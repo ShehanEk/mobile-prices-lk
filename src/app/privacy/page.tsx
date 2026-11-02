@@ -34,7 +34,7 @@ export default function PrivacyPage() {
         <h1 className="m-0 mt-6 font-display text-[clamp(40px,5.6vw,56px)] font-bold leading-none tracking-[-0.045em]">
           Privacy
         </h1>
-        <p className="m-0 mt-3 text-[14px] text-ink-3">Last updated 25 October 2026</p>
+        <p className="m-0 mt-3 text-[14px] text-ink-3">Last updated 2 November 2026</p>
 
         <div className="rise mt-8 flex flex-col gap-5 rounded-3xl bg-panel p-6 sm:p-8">
           <p className={p}>
@@ -55,12 +55,28 @@ export default function PrivacyPage() {
 
           <h2 className={h2}>What we don’t do</h2>
           <ul className={ul}>
-            <li>No ads, and no advertising cookies.</li>
+            <li>No ads of our own, and we set no advertising cookies.</li>
             <li>We never sell or share data with the shops we list.</li>
           </ul>
 
           <h2 className={h2}>Shops we link to</h2>
           <p className={p}>When you click through to a shop, you’re on their site and their privacy policy applies.</p>
+
+          <h2 className={h2}>Video reviews</h2>
+          <p className={p}>
+            Phone pages can show reviews from YouTube, found through the YouTube API Services. Their
+            thumbnails load from YouTube, so YouTube sees your IP address when you open one of those
+            pages. The player itself loads only when you press play, in YouTube’s privacy-enhanced
+            mode; from then on the{' '}
+            <a href="https://www.youtube.com/t/terms" className="text-accent underline underline-offset-2" rel="noopener">
+              YouTube Terms of Service
+            </a>{' '}
+            and{' '}
+            <a href="https://policies.google.com/privacy" className="text-accent underline underline-offset-2" rel="noopener">
+              Google’s Privacy Policy
+            </a>{' '}
+            apply, and the video may show YouTube’s ads.
+          </p>
 
           <h2 className={h2}>Opting out</h2>
           <p className={p}>

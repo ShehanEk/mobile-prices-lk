@@ -187,6 +187,19 @@ PC's normalize included. The cost: rows the PC scrapes after GitHub's 03:00
 normalize show the next night, unless the normalize workflow is run by hand.
 No routine deploys, redeploys, cache clears or live-site checks.
 
+## 2026-11-02 — Video reviews on phone pages, from trusted channels
+
+The last section of a phone page shows up to three YouTube reviews per model,
+hidden when none match. A nightly job (`reviews.yml`, 02:30 Sri Lanka time,
+before normalize clears the cache) reads the uploads of a hand-kept channel list
+(`src/reviews/youtube.ts`) through the YouTube Data API's free quota. Search
+costs 100 units a call, so it is never used. A title must say "review" and name
+exactly one model: wrong is worse than missing.
+
+The page shows a thumbnail and loads `youtube-nocookie.com` only on play, so
+reviews don't slow the page; the privacy page says what YouTube sees. Cost: free
+quota, no extra Vercel builds.
+
 ## 2026-11-02 — Home: price drops before flagships
 
 "Below their usual price" now sits above "Latest flagships", changing the
