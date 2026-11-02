@@ -192,6 +192,16 @@ No routine deploys, redeploys, cache clears or live-site checks.
 "Below their usual price" now sits above "Latest flagships", changing the
 order set in Home v2. Still hidden until a phone qualifies.
 
+## 2026-11-02 — Phone page: cheapest marked in the table, no headline boxes
+
+Approved on the [design canvas](https://claude.ai/artifact/5c2UPCMy6WQSiMyJBveBwv)
+(board "Phone page"). The two boxes from 2026-10-23 ("Cheapest overall", "With
+company warranty") are gone. As on PCPrice.lk, the cheapest in-stock row has a
+light blue tint and a "Cheapest" pill, which follows the "Company warranty
+only" switch; a line under the list says out-of-stock and last-seen prices
+never count. Share images, brand cards and search descriptions still use both
+prices.
+
 ## 2026-10-25 — GSMArena specs: found through brand lists, run from the home PC
 
 GSMArena's search answers our honest bot user agent with a Cloudflare

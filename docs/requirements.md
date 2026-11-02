@@ -25,9 +25,10 @@ Status: draft, 23 October 2026. Anything not yet in [decisions](decisions.md) wa
 
 1. **Phone page:** every shop's price for that exact phone (model + storage +
    RAM), with a **warranty badge** on each price.
-2. **Two headline prices:** cheapest with **company warranty**, and cheapest
-   overall. Shop-warranty ("6 months hardware, 1 year software") prices are
-   much lower; showing only one number would hide why.
+2. **Cheapest marked in the price list:** the cheapest in-stock row is tinted
+   and labelled, and a "Company warranty only" switch moves the mark to the
+   cheapest company price. Shop-warranty ("6 months hardware, 1 year software")
+   prices are much lower; the badges show why.
 3. **Brand list pages** with filters: brand, storage, RAM, price, warranty
    type, in stock, shop.
 4. **Deals, search, price history chart, share images, GA4, `/privacy`** —
