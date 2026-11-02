@@ -69,6 +69,10 @@ Last updated 26 October 2026.
   403/429/redirect/bot check. If GSMArena starts blocking the runners, remove
   the schedule and run it from `nightly-home.cmd` again. Models are found on GSMArena's brand lists; its search is
   behind a bot check.
+- **Video reviews (built 2026-11-02, not live):** `npm run reviews`, nightly on
+  GitHub Actions at 02:30 Sri Lanka time (`reviews.yml`). Needs the
+  `YOUTUBE_API_KEY` secret on GitHub and migration `0004` applied **before** a
+  deploy: phone pages read `phone_reviews`.
 - **First specs backfill (2026-10-25/26):** 686 of 834 models matched, 148
   unmatched (retried after 30 days, or now with `--retry-unmatched`). Three
   runs: 784 + 132 + 159 requests. 37 spec pages with no specs on them were

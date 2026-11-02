@@ -2,7 +2,7 @@ import { unstable_cache } from 'next/cache'
 import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 
 import { getDb } from '@/db'
-import { listings, phoneSpecs, phones, priceHistory } from '@/db/schema'
+import { listings, phoneReviews, phoneSpecs, phones, priceHistory } from '@/db/schema'
 import { findDeals, type Deal } from '@/lib/deals'
 import { summarisePhone, toOffer, type HistoryPoint, type Offer, type PhoneSummary, type PricePoint } from '@/lib/prices'
 import { BRAND_SLUGS, brandFromSlug } from '@/lib/site'
@@ -161,3 +161,21 @@ export async function readSpecs(brandSlug: string): Promise<Record<string, Phone
 }
 
 export const loadSpecs = unstable_cache(readSpecs, ['brand-specs'], CACHE)
+
+export type PhoneReview = { videoId: string; title: string; channel: string }
+
+/** YouTube reviews for one brand's models, keyed by model, in the order shown. */
+export async function readReviews(brandSlug: string): Promise<Record<string, PhoneReview[]>> {
+  const brand = brandFromSlug(brandSlug)
+  if (!brand) return {}
+  const rows = await getDb()
+    .select()
+    .from(phoneReviews)
+    .where(eq(phoneReviews.brand, brand))
+    .orderBy(asc(phoneReviews.model), asc(phoneReviews.position))
+  const out: Record<string, PhoneReview[]> = {}
+  for (const r of rows) (out[r.model] ??= []).push({ videoId: r.videoId, title: r.title, channel: r.channel })
+  return out
+}
+
+export const loadReviews = unstable_cache(readReviews, ['brand-reviews'], CACHE)
