@@ -6,18 +6,15 @@ import { OfferList } from '@/app/components/OfferList'
 import { PriceChart } from '@/app/components/PriceChart'
 import { SiteFooter, SiteHeader } from '@/app/components/SiteChrome'
 import { SpecsBlock } from '@/app/components/SpecsBlock'
-import { checkedLabel, configLabel, phoneDescription, priceRange, rupees, WARRANTY_PHRASE, type Offer } from '@/lib/prices'
+import { checkedLabel, configLabel, phoneDescription, priceRange, rupees } from '@/lib/prices'
 import { SITE_NAME, canonical, phoneName } from '@/lib/site'
 import { findPhone, loadBrand, loadDirectory, loadPhoneHistory, loadSpecs } from '@/queries/phones'
 
 /**
  * A page per phone configuration: /samsung/samsung-galaxy-s26-ultra-12gb-256gb.
  *
- * Two headline prices lead, because the warranty decides the price: cheapest
- * overall (any warranty) and cheapest with company warranty (Apple's own
- * counts). At 375px both sit on the first screen; the company one shrinks to a
- * single row there, as on the canvas's phone board. Then every price with its
- * badge, the 90-day chart and the specs.
+ * Every price leads, each with its warranty badge and the cheapest marked in
+ * the list, as on PCPrice.lk. Then the 90-day chart and the specs.
  */
 
 export const revalidate = false
@@ -50,87 +47,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
       type: 'website',
     },
   }
-}
-
-const label = 'text-[12px] font-bold uppercase tracking-[0.06em] sm:text-[13px]'
-const bigPrice = 'font-display text-[40px] font-extrabold leading-[1.05] tracking-[-0.04em]'
-
-function GoToShop({ offer, className }: { offer: Offer; className: string }) {
-  return (
-    <a href={offer.url} target="_blank" rel="noopener nofollow" className={`btn ${className}`}>
-      Go to shop →<span className="sr-only"> (opens {offer.shop} in a new tab)</span>
-    </a>
-  )
-}
-
-function OverallCard({ offer }: { offer: Offer | null }) {
-  return (
-    <div className="flex flex-col gap-1 rounded-3xl bg-best p-5 sm:flex-[1_1_320px] sm:gap-1.5 sm:px-[22px] sm:pb-5 sm:pt-[22px]">
-      <span className={label}>Cheapest overall</span>
-      {offer ? (
-        <>
-          <span className={bigPrice}>{rupees(offer.priceLkr)}</span>
-          <span className="text-[15px]">
-            {offer.shop} · {WARRANTY_PHRASE[offer.warranty]}
-            {offer.inStock ? '' : ' · out of stock'}
-          </span>
-          <GoToShop
-            offer={offer}
-            className="mt-3 flex h-12 items-center justify-center rounded-full bg-ink px-[18px] text-[16px] font-semibold text-white sm:mt-2.5 sm:inline-flex sm:h-11 sm:self-start sm:text-[15px]"
-          />
-        </>
-      ) : (
-        <span className="text-[15px] text-ink-2">No shop has confirmed a price in the last 7 days. Last seen prices are below.</span>
-      )}
-    </div>
-  )
-}
-
-function CompanyCard({ offer }: { offer: Offer | null }) {
-  if (!offer) {
-    return (
-      <div className="flex flex-col gap-1 rounded-3xl bg-company px-5 py-[18px] sm:flex-[1_1_320px] sm:gap-1.5 sm:p-[22px]">
-        <span className={label}>With company warranty</span>
-        <span className="text-[15px] text-ink-2">No shop lists this phone with company warranty right now.</span>
-      </div>
-    )
-  }
-  return (
-    <>
-      {/* Phone: one compact row, so both headline prices fit the first screen at 375px. */}
-      <div className="flex items-center gap-3 rounded-3xl bg-company px-5 py-[18px] sm:hidden">
-        <span className="flex flex-1 flex-col gap-0.5">
-          <span className={label}>With company warranty</span>
-          <span className="font-display text-[26px] font-extrabold tracking-[-0.03em]">{rupees(offer.priceLkr)}</span>
-          <span className="text-[14px]">
-            {offer.shop}
-            {offer.inStock ? '' : ' · out of stock'}
-          </span>
-        </span>
-        <a
-          href={offer.url}
-          target="_blank"
-          rel="noopener nofollow"
-          aria-label={`Go to ${offer.shop} (opens in a new tab)`}
-          className="btn flex h-12 w-12 flex-none items-center justify-center rounded-full bg-accent text-[20px] font-bold text-white"
-        >
-          →
-        </a>
-      </div>
-      <div className="hidden flex-[1_1_320px] flex-col gap-1.5 rounded-3xl bg-company px-[22px] pb-5 pt-[22px] sm:flex">
-        <span className={label}>With company warranty</span>
-        <span className={bigPrice}>{rupees(offer.priceLkr)}</span>
-        <span className="text-[15px]">
-          {offer.shop} · {offer.warrantyText ?? WARRANTY_PHRASE[offer.warranty]}
-          {offer.inStock ? '' : ' · out of stock'}
-        </span>
-        <GoToShop
-          offer={offer}
-          className="mt-2.5 inline-flex h-11 items-center self-start rounded-full bg-accent px-[18px] text-[15px] font-semibold text-white"
-        />
-      </div>
-    </>
-  )
 }
 
 export default async function PhonePage({ params }: Params) {
@@ -239,10 +155,6 @@ export default async function PhonePage({ params }: Params) {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <OverallCard offer={phone.overall} />
-            <CompanyCard offer={phone.company} />
-          </div>
           <p className="m-0 -mt-2 text-[13px] text-ink-3 sm:mt-0 sm:text-[14px]">
             Prices for any colour. Checked {checkedLabel(phone.checkedAt)}.
           </p>

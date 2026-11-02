@@ -8,7 +8,8 @@ import { WARRANTY_BADGE, dayLabel, isCompany, rupees, type Offer } from '@/lib/p
 /**
  * Every price for one phone, each with its warranty badge, and the "Company
  * warranty only" switch. Offers arrive in `sortOffers` order, so the first
- * current in-stock one shown is the cheapest and gets the green pill.
+ * current in-stock one shown is the cheapest: its row is tinted and carries the
+ * "Cheapest" pill, as on PCPrice.lk's table.
  *
  * The full list is in the server HTML; the switch only hides rows.
  */
@@ -37,13 +38,25 @@ function Badge({ warranty, small = false }: { warranty: Warranty; small?: boolea
   )
 }
 
-function Price({ offer, best }: { offer: Offer; best: boolean }) {
-  const style = best
-    ? 'inline-block rounded-xl bg-best px-3 py-1.5 font-extrabold text-best-ink'
-    : live(offer)
-      ? 'font-bold'
-      : 'font-semibold text-ink-3'
-  return <span className={`flex-none whitespace-nowrap text-[17px] ${style}`}>{rupees(offer.priceLkr)}</span>
+function Price({ offer }: { offer: Offer }) {
+  return (
+    <span className={`flex-none whitespace-nowrap text-[17px] ${live(offer) ? 'font-bold' : 'font-semibold text-ink-3'}`}>
+      {rupees(offer.priceLkr)}
+    </span>
+  )
+}
+
+function ShopName({ shop, best }: { shop: string; best: boolean }) {
+  return (
+    <span className="inline-flex flex-wrap items-center gap-2">
+      {shop}
+      {best && (
+        <span className="inline-flex h-[22px] items-center whitespace-nowrap rounded-full bg-accent px-[9px] text-[12px] font-semibold text-white">
+          Cheapest
+        </span>
+      )}
+    </span>
+  )
 }
 
 export function OfferList({ offers }: { offers: Offer[] }) {
@@ -52,7 +65,7 @@ export function OfferList({ offers }: { offers: Offer[] }) {
   const best = shown.find(live) ?? null
 
   return (
-    <section aria-labelledby="every-price" className="mt-5 flex flex-col gap-3 sm:mt-16 sm:gap-4">
+    <section aria-labelledby="every-price" className="mt-5 flex flex-col gap-3 sm:mt-10 sm:gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
         <h2 id="every-price" className="m-0 font-display text-[24px] font-bold tracking-[-0.03em] sm:text-[30px]">
           Every price <span className="text-ink-3">{shown.length}</span>
@@ -101,8 +114,10 @@ export function OfferList({ offers }: { offers: Offer[] }) {
               </thead>
               <tbody>
                 {shown.map((o) => (
-                  <tr key={key(o)} className="row border-t border-line">
-                    <td className="px-6 py-[18px] font-semibold">{o.shop}</td>
+                  <tr key={key(o)} className={`row border-t border-line ${o === best ? 'bg-cheapest' : ''}`}>
+                    <td className="px-6 py-[18px] font-semibold">
+                      <ShopName shop={o.shop} best={o === best} />
+                    </td>
                     <td className="px-3 py-[18px]">
                       <span className="flex flex-col items-start gap-1">
                         <Badge warranty={o.warranty} />
@@ -113,7 +128,7 @@ export function OfferList({ offers }: { offers: Offer[] }) {
                       <span className={live(o) ? 'font-semibold text-best-ink' : 'text-ink-3'}>{stockText(o)}</span>
                     </td>
                     <td className="px-3 py-[18px] text-right">
-                      <Price offer={o} best={o === best} />
+                      <Price offer={o} />
                     </td>
                     <td className="px-6 py-[18px] text-right">
                       <a href={o.url} target="_blank" rel="noopener nofollow" className="go whitespace-nowrap font-semibold text-accent">
@@ -129,20 +144,33 @@ export function OfferList({ offers }: { offers: Offer[] }) {
           <ul className="m-0 flex list-none flex-col gap-3 p-0 md:hidden">
             {shown.map((o) => (
               <li key={key(o)}>
-                <a href={o.url} target="_blank" rel="noopener nofollow" className="lift edge flex items-center gap-3 rounded-[20px] p-4">
+                <a
+                  href={o.url}
+                  target="_blank"
+                  rel="noopener nofollow"
+                  className={`lift edge flex items-center gap-3 rounded-[20px] p-4 ${o === best ? 'bg-cheapest' : ''}`}
+                >
                   <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-                    <span className="text-[16px] font-semibold">{o.shop}</span>
+                    <span className="text-[16px] font-semibold">
+                      <ShopName shop={o.shop} best={o === best} />
+                    </span>
                     <span className="flex flex-wrap items-center gap-2">
                       <Badge warranty={o.warranty} small />
                       <span className={`text-[13px] ${live(o) ? 'font-semibold text-best-ink' : 'text-ink-3'}`}>{stockText(o)}</span>
                     </span>
                   </span>
-                  <Price offer={o} best={o === best} />
+                  <Price offer={o} />
                   <span className="sr-only"> (opens {o.shop} in a new tab)</span>
                 </a>
               </li>
             ))}
           </ul>
+
+          {shown.some((o) => !live(o)) && (
+            <p className="m-0 text-[13px] text-ink-3">
+              An out-of-stock or last-seen price is shown for reference and never counts as the cheapest.
+            </p>
+          )}
         </>
       )}
     </section>
