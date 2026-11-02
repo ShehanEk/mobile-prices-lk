@@ -38,7 +38,7 @@ export const rawListings = pgTable(
   (t) => [index('raw_listings_pending_idx').on(t.normalizedAt, t.scrapedAt)],
 )
 
-export const runKindEnum = pgEnum('run_kind', ['scrape', 'normalize', 'specs'])
+export const runKindEnum = pgEnum('run_kind', ['scrape', 'normalize', 'specs', 'reviews'])
 export const runStatusEnum = pgEnum('run_status', ['running', 'ok', 'failed', 'abandoned'])
 /** Who started the run. `ci` is GitHub Actions, `desktop` the tray app, `cli` a terminal. */
 export const runActorEnum = pgEnum('run_actor', ['ci', 'desktop', 'cli'])
@@ -190,6 +190,26 @@ export const phoneSpecs = pgTable(
     fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [primaryKey({ columns: [t.brand, t.model] })],
+)
+
+/**
+ * YouTube reviews, up to three per model (every RAM and storage configuration
+ * shares them). Replaced nightly by the reviews job. `position` is the order
+ * shown on the phone page.
+ */
+export const phoneReviews = pgTable(
+  'phone_reviews',
+  {
+    brand: text('brand').notNull(),
+    model: text('model').notNull(),
+    videoId: text('video_id').notNull(),
+    position: integer('position').notNull(),
+    title: text('title').notNull(),
+    channel: text('channel').notNull(),
+    publishedAt: timestamp('published_at', { withTimezone: true }).notNull(),
+    fetchedAt: timestamp('fetched_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.brand, t.model, t.videoId] })],
 )
 
 export type RawListing = typeof rawListings.$inferSelect

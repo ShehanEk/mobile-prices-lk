@@ -6,9 +6,10 @@ import { OfferList } from '@/app/components/OfferList'
 import { PriceChart } from '@/app/components/PriceChart'
 import { SiteFooter, SiteHeader } from '@/app/components/SiteChrome'
 import { SpecsBlock } from '@/app/components/SpecsBlock'
+import { VideoReviews } from '@/app/components/VideoReviews'
 import { checkedLabel, configLabel, phoneDescription, priceRange, rupees, WARRANTY_PHRASE, type Offer } from '@/lib/prices'
 import { SITE_NAME, canonical, phoneName } from '@/lib/site'
-import { findPhone, loadBrand, loadDirectory, loadPhoneHistory, loadSpecs } from '@/queries/phones'
+import { findPhone, loadBrand, loadDirectory, loadPhoneHistory, loadReviews, loadSpecs } from '@/queries/phones'
 
 /**
  * A page per phone configuration: /samsung/samsung-galaxy-s26-ultra-12gb-256gb.
@@ -17,7 +18,7 @@ import { findPhone, loadBrand, loadDirectory, loadPhoneHistory, loadSpecs } from
  * overall (any warranty) and cheapest with company warranty (Apple's own
  * counts). At 375px both sit on the first screen; the company one shrinks to a
  * single row there, as on the canvas's phone board. Then every price with its
- * badge, the 90-day chart and the specs.
+ * badge, the 90-day chart, the specs and any video reviews.
  */
 
 export const revalidate = false
@@ -138,7 +139,7 @@ export default async function PhonePage({ params }: Params) {
   const phone = await findPhone(brand, phoneId)
   if (!phone) notFound()
 
-  const [siblings, history, specs] = await Promise.all([loadBrand(brand), loadPhoneHistory(phone.phoneId), loadSpecs(brand)])
+  const [siblings, history, specs, reviews] = await Promise.all([loadBrand(brand), loadPhoneHistory(phone.phoneId), loadSpecs(brand), loadReviews(brand)])
   const configs = siblings
     .filter((p) => p.model === phone.model)
     .sort((a, b) => (a.ramGb ?? 0) - (b.ramGb ?? 0) || a.storageGb - b.storageGb || Number(a.esimOnly) - Number(b.esimOnly))
@@ -263,6 +264,8 @@ export default async function PhonePage({ params }: Params) {
               : `Company warranty comes from ${phone.brand}’s official agent. Shop warranty is the shop’s own, often 6 months hardware and 1 year software.`}
           </span>
         </div>
+
+        <VideoReviews reviews={reviews[phone.model] ?? []} />
       </main>
 
       <SiteFooter />
