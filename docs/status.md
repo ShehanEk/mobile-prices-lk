@@ -73,6 +73,9 @@ Last updated 26 October 2026.
   GitHub Actions at 02:30 Sri Lanka time (`reviews.yml`). Needs the
   `YOUTUBE_API_KEY` secret on GitHub and migration `0004` applied **before** a
   deploy: phone pages read `phone_reviews`.
+- **Shop profiles (built 2026-11-03, not live):** last section of the home page.
+  Notes reviewed 2026-11-03; next hand refresh due about February 2027
+  ([runbook](shop-reviews.md)). Goes live with the next manual deploy.
 - **First specs backfill (2026-10-25/26):** 686 of 834 models matched, 148
   unmatched (retried after 30 days, or now with `--retry-unmatched`). Three
   runs: 784 + 132 + 159 requests. 37 spec pages with no specs on them were
