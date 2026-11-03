@@ -78,6 +78,17 @@ test('a rival named later in the title does not take the review', () => {
   assert.equal(matchModel('Honor Magic V5 Review | Samsung Galaxy Z Fold 7 Destroyed?', list)?.model, 'Magic V5')
 })
 
+test('a case review is not a phone review', () => {
+  assert.equal(matched('dbrand Grip Case for iPhone 17 REVIEW: Extreme GRIP'), null)
+  assert.equal(matched('Galaxy S26 series Incipio Cru Case Review | Protect your phone in style.'), null)
+})
+
+test('a phone named after the section that says review is not the one reviewed', () => {
+  assert.equal(matched('Motorola Edge 70 Review | iPhone 17, Get In The Bin!'), null)
+  assert.equal(matched('Best Phone Yet? | iPhone 17 Review | Five Months Later'), 'iPhone 17')
+  assert.equal(matched('Galaxy S26 | Unboxing & One Week Review'), 'Galaxy S26')
+})
+
 test('durationSeconds reads YouTube durations', () => {
   assert.equal(durationSeconds('PT12M34S'), 754)
   assert.equal(durationSeconds('PT1H2M'), 3720)
