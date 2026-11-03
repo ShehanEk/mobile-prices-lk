@@ -238,6 +238,11 @@ Reading them by hand each quarter and publishing only our own short summary, a
 count and a link back was chosen knowingly. The Places API was rejected on
 PCPrice.lk because it returns about 5 reviews per place.
 
+## 2026-11-03 — Home: no "Cheapest today" board
+
+The hero board is gone. It listed the four phones the most shops stock, so its
+title promised something it did not show. The search leads the hero alone.
+
 ## 2026-10-25 — GSMArena specs: found through brand lists, run from the home PC
 
 GSMArena's search answers our honest bot user agent with a Cloudflare

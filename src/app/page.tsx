@@ -4,35 +4,12 @@ import { SearchBox } from './components/SearchBox'
 import { ShopProfiles } from './components/ShopProfiles'
 import { SiteFooter, SiteHeader } from './components/SiteChrome'
 import { toDealItems, type DealItem } from '@/lib/deals'
-import { flagshipCards, rupees, sizeLabel, type FlagshipCard, type PhoneSummary } from '@/lib/prices'
+import { flagshipCards, rupees, type FlagshipCard } from '@/lib/prices'
 import { shopStats } from '@/lib/shop-stats'
 import { BRAND_SLUGS, FLAGSHIPS, TRACKED_SHOPS, brandFromSlug, brandStyle } from '@/lib/site'
 import { loadDeals, loadDirectory } from '@/queries/phones'
 
 export const revalidate = false
-
-/**
- * "Cheapest today": the four phones the most shops have in stock, one
- * configuration per model, each at its cheapest in-stock price. A stand-in for
- * popularity that the data supports (decisions: no "Popular" section until
- * there is real data for it).
- */
-function cheapestToday(phones: PhoneSummary[]): PhoneSummary[] {
-  const seen = new Set<string>()
-  return phones
-    .filter((p) => p.overall?.inStock)
-    .sort((a, b) => b.inStockShops - a.inStockShops || a.overall!.priceLkr - b.overall!.priceLkr)
-    .filter((p) => {
-      const key = `${p.brand}|${p.model}`
-      if (seen.has(key)) return false
-      seen.add(key)
-      return true
-    })
-    .slice(0, 4)
-}
-
-/** "12/256 GB" on the board; iPhones show storage only. */
-const shortConfig = (p: PhoneSummary) => (p.ramGb === null ? sizeLabel(p.storageGb) : `${p.ramGb}/${sizeLabel(p.storageGb)}`)
 
 function DropCard({ deal }: { deal: DealItem }) {
   const { tint, ink } = brandStyle(deal.brand)
@@ -81,7 +58,6 @@ function FlagshipTile({ card }: { card: FlagshipCard }) {
 export default async function HomePage() {
   const [directory, deals] = await Promise.all([loadDirectory(), loadDeals()])
   const brands = BRAND_SLUGS.filter((s) => directory[s].length > 0)
-  const board = cheapestToday(Object.values(directory).flat())
   const flagships = flagshipCards(Object.values(directory).flat(), FLAGSHIPS)
   const drops = toDealItems(deals).slice(0, 4)
   const stats = shopStats(Object.values(directory).flat(), TRACKED_SHOPS)
@@ -104,34 +80,6 @@ export default async function HomePage() {
           </p>
           <SearchBox large />
         </div>
-
-        {board.length > 0 && (
-          <div className="rise edge-card flex min-w-0 flex-[1_1_380px] flex-col rounded-3xl bg-white px-5 pb-6 pt-7 [animation-delay:0.12s] sm:px-7">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <span className="text-[13px] font-semibold uppercase tracking-[0.06em] text-ink-3">Cheapest today</span>
-              <span className="inline-flex items-center gap-1.5 text-[13px] text-ink-3">
-                <span aria-hidden className="h-2 w-2 rounded-full bg-live" />
-                In stock
-              </span>
-            </div>
-            {board.map((p) => (
-              <Link key={p.phoneId} href={`/${p.brandSlug}/${p.phoneId}`} className="row -mx-3 flex items-baseline justify-between gap-4 border-t border-line-soft px-3 py-4">
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-[17px] font-semibold">{p.model}</span>
-                  <span className="text-[14px] text-ink-3">
-                    {shortConfig(p)} · {p.overall!.shop}
-                  </span>
-                </span>
-                <span className="whitespace-nowrap font-display text-[24px] font-extrabold tracking-[-0.03em] sm:text-[26px]">{rupees(p.overall!.priceLkr)}</span>
-              </Link>
-            ))}
-            {drops.length > 0 && (
-              <Link href="/deals" className="mt-2 border-t border-line-soft pt-4 text-[15px] font-semibold text-accent">
-                See today’s price drops →
-              </Link>
-            )}
-          </div>
-        )}
       </section>
 
       <section id="brands" className="mx-auto max-w-[1200px] scroll-mt-4 px-4 pb-16 pt-6 sm:px-6">
