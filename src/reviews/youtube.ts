@@ -32,6 +32,8 @@ export type Candidate = Model & {
 /** Words that make a different phone: "Galaxy S26 FE" is not a "Galaxy S26". */
 const VARIANTS = new Set(['pro', 'max', 'ultra', 'plus', 'fe', 'mini', 'lite', 'air', 'neo', 'edge', 'fold', 'flip', 'se', 'turbo', 'prime'])
 const NETWORKS = new Set(['4g', '5g'])
+/** Words in a title that mean it isn't a review of one phone: Shorts, comparisons and accessories. */
+const NOT_A_REVIEW = new Set(['shorts', 'vs', 'versus', 'comparison', 'case', 'cases'])
 /** Product lines that name the phone alone. Any other model needs its brand right before it: "14" is not a phone without "Xiaomi". */
 const SELF_NAMED = new Set(['iphone', 'pixel', 'galaxy', 'redmi', 'poco', 'moto', 'hmd', 'nubia', 'nord', 'reno', 'camon', 'pova', 'cmf'])
 /** A further model code: "HMD Fusion X1" is not an "HMD Fusion". Years and memory sizes don't count. */
@@ -56,11 +58,16 @@ function runsOf(haystack: string[], needle: string[]): number[] {
 /**
  * The one model a video reviews, or null. The earliest in the title wins, since
  * rivals come later ("Magic V5 Review | Z Fold 7 Destroyed?"), then the one with
- * the most words.
+ * the most words. Sections after the first to say "review" are ignored, so
+ * "Edge 70 Review | iPhone Air, Get In The Bin!" is not about an iPhone Air.
  */
 export function matchModel<T extends Model>(title: string, models: T[]): T | null {
-  const t = tokens(title)
-  if (!t.includes('review') || t.includes('shorts') || t.includes('vs') || t.includes('versus') || t.includes('comparison')) return null
+  if (tokens(title).some((w) => NOT_A_REVIEW.has(w))) return null
+
+  const sections = title.split('|')
+  const reviewAt = sections.findIndex((s) => tokens(s).includes('review'))
+  if (reviewAt === -1) return null
+  const t = tokens(sections.slice(0, reviewAt + 1).join(' '))
 
   const parsed = models.map((m) => {
     const words = tokens(m.model)
