@@ -1,4 +1,4 @@
-import { BLUE, BrandTile, DISPLAY, LABEL, OG_SIZE, ogImage } from '@/lib/og'
+import { BLUE, BrandTile, Capsule, GLASS, LABEL, OG_SIZE, ogImage } from '@/lib/og'
 import { rupees } from '@/lib/prices'
 import { BRAND_SLUGS, TRACKED_SHOPS, brandFromSlug } from '@/lib/site'
 import { loadBrand, loadDirectory } from '@/queries/phones'
@@ -17,9 +17,9 @@ export async function generateStaticParams() {
 
 function Stat({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '22px 28px', borderRadius: 24, background: '#F2F4F9' }}>
+    <div style={{ ...GLASS, display: 'flex', flexDirection: 'column', gap: 6, padding: '22px 30px', borderRadius: 28 }}>
       <span style={{ fontSize: 18, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: LABEL }}>{label}</span>
-      <span style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: 46, letterSpacing: '-0.03em', color }}>{value}</span>
+      <span style={{ fontWeight: 700, fontSize: 46, letterSpacing: '-0.03em', color }}>{value}</span>
     </div>
   )
 }
@@ -35,8 +35,8 @@ export default async function Image({ params }: { params: Promise<{ brand: strin
     body: (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 34 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-          <BrandTile brand={brand} fontSize={44} />
-          <div style={{ display: 'flex', flexDirection: 'column', fontFamily: DISPLAY, fontWeight: 700, fontSize: 60, lineHeight: 1, letterSpacing: '-0.04em' }}>
+          <BrandTile brand={brand} fontSize={50} />
+          <div style={{ display: 'flex', flexDirection: 'column', fontWeight: 700, fontSize: 60, lineHeight: 1, letterSpacing: '-0.04em' }}>
             <span>phone prices</span>
             <span>in Sri Lanka</span>
           </div>
@@ -48,6 +48,6 @@ export default async function Image({ params }: { params: Promise<{ brand: strin
         </div>
       </div>
     ),
-    footer: <span>{`Every ${brand} price, company or shop warranty labelled`}</span>,
+    footer: <Capsule>{`Every ${brand} price, company or shop warranty labelled`}</Capsule>,
   })
 }

@@ -1,4 +1,4 @@
-import { BrandTile, DISPLAY, OG_SIZE, ogImage } from '@/lib/og'
+import { BLUE, BrandTile, Capsule, OG_SIZE, ogImage } from '@/lib/og'
 import { TRACKED_SHOPS } from '@/lib/site'
 import { BRANDS } from '@/normalize/phone'
 
@@ -12,17 +12,19 @@ export default function Image() {
   return ogImage({
     body: (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', fontFamily: DISPLAY, fontWeight: 700, fontSize: 76, lineHeight: 0.98, letterSpacing: '-0.045em' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', fontWeight: 700, fontSize: 76, lineHeight: 1, letterSpacing: '-0.045em' }}>
           <span>Find the cheapest place</span>
-          <span>to buy your next phone</span>
+          <span style={{ display: 'flex' }}>
+            to buy your&nbsp;<span style={{ color: BLUE }}>next phone</span>
+          </span>
         </div>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14 }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
           {BRANDS.slice(0, 8).map((b) => (
-            <BrandTile key={b} brand={b} fontSize={28} />
+            <BrandTile key={b} brand={b} fontSize={26} />
           ))}
         </div>
       </div>
     ),
-    footer: <span>{`${TRACKED_SHOPS.length} Sri Lankan shops compared side by side`}</span>,
+    footer: <Capsule>{`${TRACKED_SHOPS.length} Sri Lankan shops compared side by side`}</Capsule>,
   })
 }

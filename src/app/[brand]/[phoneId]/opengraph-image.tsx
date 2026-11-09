@@ -1,4 +1,4 @@
-import { DISPLAY, INK, LABEL, MUTED, OG_SIZE, TINT_BEST, TINT_COMPANY, ogImage } from '@/lib/og'
+import { BEST_INK, BLUE, COMPANY_INK, Capsule, Dot, GLASS, GREEN, INK, LABEL, MUTED, OG_SIZE, ogImage } from '@/lib/og'
 import { configLabel, rupees, type Offer } from '@/lib/prices'
 import { phoneName } from '@/lib/site'
 import { findPhone } from '@/queries/phones'
@@ -19,11 +19,14 @@ export function generateStaticParams() {
   return []
 }
 
-function Headline({ title, offer, tint }: { title: string; offer: Offer | null; tint: string }) {
+function Headline({ title, offer, ink, dot }: { title: string; offer: Offer | null; ink: string; dot: string }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, padding: '24px 28px', borderRadius: 28, background: tint }}>
-      <span style={{ fontSize: 20, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: INK }}>{title}</span>
-      <span style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: 64, lineHeight: 1.05, letterSpacing: '-0.04em', color: offer ? INK : LABEL }}>
+    <div style={{ ...GLASS, display: 'flex', flexDirection: 'column', gap: 8, flex: 1, padding: '26px 30px', borderRadius: 32 }}>
+      <span style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 18, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', color: ink }}>
+        <Dot color={dot} />
+        {title}
+      </span>
+      <span style={{ fontWeight: 700, fontSize: 64, lineHeight: 1.05, letterSpacing: '-0.04em', color: offer ? INK : LABEL }}>
         {offer ? rupees(offer.priceLkr) : 'None yet'}
       </span>
       <span style={{ fontSize: 24, color: MUTED }}>{offer ? offer.shop : 'No current price'}</span>
@@ -40,15 +43,20 @@ export default async function Image({ params }: { params: Promise<{ brand: strin
   return ogImage({
     body: (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
-        <span style={{ fontFamily: DISPLAY, fontWeight: 700, fontSize: name.length > 22 ? 60 : 76, lineHeight: 0.95, letterSpacing: '-0.045em' }}>
+        <span style={{ fontWeight: 700, fontSize: name.length > 22 ? 60 : 76, lineHeight: 0.95, letterSpacing: '-0.045em' }}>
           {name}
         </span>
         <div style={{ display: 'flex', gap: 20 }}>
-          <Headline title="Cheapest overall" offer={phone.overall} tint={TINT_BEST} />
-          <Headline title="With company warranty" offer={phone.company} tint={TINT_COMPANY} />
+          <Headline title="Cheapest overall" offer={phone.overall} ink={BEST_INK} dot={GREEN} />
+          <Headline title="With company warranty" offer={phone.company} ink={COMPANY_INK} dot={BLUE} />
         </div>
       </div>
     ),
-    footer: <span>{`${configLabel(phone)} · ${phone.shops} ${phone.shops === 1 ? 'shop' : 'shops'} compared`}</span>,
+    footer: (
+      <>
+        <Capsule strong>{configLabel(phone)}</Capsule>
+        <Capsule>{`${phone.shops} ${phone.shops === 1 ? 'shop' : 'shops'} compared`}</Capsule>
+      </>
+    ),
   })
 }
