@@ -92,6 +92,10 @@ const ids: [string, string][] = [
   ['ZTE Blade V50 Design 4 + 10GB RAM 256GB', 'zte-blade-v50-design-4gb-256gb'],
   // M1: an accessory after "with" does not make the title not a phone.
   ['Honor 400 Pro 5G 12GB RAM 512GB With Buds', 'honor-400-pro-12gb-512gb'],
+  // A bundle is the phone with extras.
+  ['Samsung Galaxy A10 + Full Glue Tempered Glass + Back Cover – Bundle Pack 2GB RAM, 32GB', 'samsung-galaxy-a10-2gb-32gb'],
+  ['Xiaomi Mi A3 (2019) + Redmi AirDots – Bundle Pack 4GB RAM, 64 GB', 'xiaomi-mi-a3-2019-4gb-64gb'],
+  ['Xiaomi Black Shark 2 Gaming Phone with Left Game Controller 8GB RAM, 128GB', 'xiaomi-black-shark-2-8gb-128gb'],
   // M3: a dash before non-colour words is part of the name.
   ['Infinix Note 40 Pro -Racing Edition 8GB 256GB', 'infinix-note-40-pro-racing-edition-8gb-256gb'],
 ]
