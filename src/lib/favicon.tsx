@@ -1,6 +1,9 @@
 import { ImageResponse } from 'next/og'
 
-import { DISPLAY, INK, font } from '@/lib/og'
+import { INK, font } from '@/lib/og'
+
+/** The favicon keeps its Bricolage "m" (decisions, 2026-11-10 "Share images"). */
+const DISPLAY = 'Bricolage Grotesque'
 
 /**
  * The favicon: a white Bricolage "m" on the ink tile, with a green dot like

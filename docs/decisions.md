@@ -298,3 +298,13 @@ unchanged.
 - **Mobile nav:** below 640px a frosted tab bar at the bottom (Home, Brands,
   Price drops) with a round Search button replaces the menu. Phone pages show
   a back link to their brand in place of the wordmark.
+
+## 2026-11-10 — Share images: Liquid Glass
+
+Approved on the [design canvas](https://claude.ai/artifact/TkAhRbFu3Sp26Y5NGj3DsG)
+(board "Share images"). The home, brand and phone share images take the site's
+pale page and colour glow; the wordmark, prices, stats and footer facts sit on
+glass. `next/og` has no backdrop blur, so glass is a white gradient, a bright
+edge and a soft shadow (`GLASS` in `src/lib/og.tsx`). Light only. Inter
+replaces Bricolage Grotesque and Geist; the favicon keeps its Bricolage "m".
+Content is unchanged.
