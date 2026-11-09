@@ -10,7 +10,7 @@ export function ReviewPlayer({ videoId, title }: { videoId: string; title: strin
   const [playing, setPlaying] = useState(false)
 
   return (
-    <div className="relative aspect-video bg-ink">
+    <div className="relative aspect-video overflow-hidden rounded-[20px] bg-[#121621]">
       {playing ? (
         <iframe
           src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1`}
@@ -38,8 +38,8 @@ export function ReviewPlayer({ videoId, title }: { videoId: string; title: strin
             decoding="async"
             className="absolute inset-0 h-full w-full object-cover"
           />
-          <span className="btn relative flex h-14 w-14 items-center justify-center rounded-full bg-white sm:h-16 sm:w-16">
-            <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="#1A1F2B">
+          <span className="btn relative flex h-14 w-14 items-center justify-center rounded-full bg-white/25 shadow-[inset_0_1px_0_rgb(255_255_255/50%),inset_0_0_0_1px_rgb(255_255_255/25%)] backdrop-blur-xl backdrop-saturate-[1.8] sm:h-16 sm:w-16">
+            <svg aria-hidden width="26" height="26" viewBox="0 0 24 24" fill="#ffffff">
               <path d="M8 5.5v13l11-6.5z" />
             </svg>
           </span>

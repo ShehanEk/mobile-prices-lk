@@ -63,7 +63,7 @@ export function PriceChart({ points }: { points: HistoryPoint[] }) {
       : '.')
 
   return (
-    <figure className="m-0 min-w-0 flex-[2_1_560px] rounded-3xl bg-panel p-5 sm:rounded-[28px] sm:p-7">
+    <figure className="m-0 min-w-0 flex-[2_1_560px] rounded-[28px] bg-panel p-5 sm:rounded-[32px] sm:p-7">
       <figcaption className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 sm:mb-[18px]">
         <span className="font-display text-[20px] font-bold tracking-[-0.02em] sm:text-[24px]">
           <span className="sm:hidden">Lowest price, 90 days</span>
@@ -85,12 +85,12 @@ export function PriceChart({ points }: { points: HistoryPoint[] }) {
       </figcaption>
 
       <svg role="img" aria-label={label} viewBox="0 0 640 220" className="hidden h-auto w-full sm:block">
-        <g stroke="#D5DAE3" strokeWidth="1">
+        <g className="stroke-line-strong" strokeWidth="1">
           <line x1="56" y1="20" x2="640" y2="20" />
           <line x1="56" y1="90" x2="640" y2="90" />
           <line x1="56" y1="160" x2="640" y2="160" />
         </g>
-        <g fontSize="12" fill="#69707F" style={{ fontFamily: 'var(--font-geist), sans-serif' }}>
+        <g fontSize="12" className="fill-ink-3 font-sans">
           <text x="0" y="24">{thousands(wide.max)}</text>
           <text x="0" y="94">{thousands((wide.min + wide.max) / 2)}</text>
           <text x="0" y="164">{thousands(wide.min)}</text>
@@ -100,20 +100,20 @@ export function PriceChart({ points }: { points: HistoryPoint[] }) {
           )}
           <text x="640" y="210" textAnchor="end">{dayLabel(last.day)}</text>
         </g>
-        {hasCompany && <polyline fill="none" stroke="#3467D7" strokeWidth="3" strokeLinejoin="round" points={wide.company} />}
-        <polyline fill="none" stroke="#1A1F2B" strokeWidth="3" strokeLinejoin="round" points={wide.any} />
-        <circle cx={Math.min(wide.end.x, 634)} cy={wide.end.y} r="6" fill="#3DBA6E" stroke="#1A1F2B" strokeWidth="2" />
+        {hasCompany && <polyline fill="none" className="stroke-accent" strokeWidth="3" strokeLinejoin="round" points={wide.company} />}
+        <polyline fill="none" className="stroke-ink" strokeWidth="3" strokeLinejoin="round" points={wide.any} />
+        <circle cx={Math.min(wide.end.x, 634)} cy={wide.end.y} r="6" className="fill-live stroke-ink" strokeWidth="2" />
       </svg>
 
       <svg role="img" aria-label={label} viewBox="0 0 320 120" className="block h-auto w-full sm:hidden">
-        <g stroke="#D5DAE3" strokeWidth="1">
+        <g className="stroke-line-strong" strokeWidth="1">
           <line x1="0" y1="10" x2="320" y2="10" />
           <line x1="0" y1="60" x2="320" y2="60" />
           <line x1="0" y1="110" x2="320" y2="110" />
         </g>
-        {hasCompany && <polyline fill="none" stroke="#3467D7" strokeWidth="3" strokeLinejoin="round" points={narrow.company} />}
-        <polyline fill="none" stroke="#1A1F2B" strokeWidth="3" strokeLinejoin="round" points={narrow.any} />
-        <circle cx={Math.min(narrow.end.x, 314)} cy={narrow.end.y} r="6" fill="#3DBA6E" stroke="#1A1F2B" strokeWidth="2" />
+        {hasCompany && <polyline fill="none" className="stroke-accent" strokeWidth="3" strokeLinejoin="round" points={narrow.company} />}
+        <polyline fill="none" className="stroke-ink" strokeWidth="3" strokeLinejoin="round" points={narrow.any} />
+        <circle cx={Math.min(narrow.end.x, 314)} cy={narrow.end.y} r="6" className="fill-live stroke-ink" strokeWidth="2" />
       </svg>
     </figure>
   )

@@ -29,7 +29,7 @@ export function SpecsBlock({ brand, model, specs }: { brand: string; model: stri
   }
 
   return (
-    <section aria-labelledby="specs" className="edge flex min-w-0 flex-[1_1_300px] flex-col gap-4 rounded-3xl p-5 sm:rounded-[28px] sm:p-7">
+    <section aria-labelledby="specs" className="edge-card flex min-w-0 flex-[1_1_300px] flex-col gap-4 rounded-[28px] bg-card p-5 sm:rounded-[32px] sm:p-7">
       <h2 id="specs" className="m-0 font-display text-[20px] font-bold tracking-[-0.02em] sm:text-[24px]">
         Specs
       </h2>

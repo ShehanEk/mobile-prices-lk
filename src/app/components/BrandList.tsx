@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { ViewTransition, useMemo, useState } from 'react'
 
 import type { Warranty } from '@/db/schema'
 import { cardPrices, configLabel, rupees, sizeLabel } from '@/lib/prices'
@@ -42,7 +42,7 @@ type Sort = 'low' | 'high' | 'shops'
 const WARRANTY_FILTERS: { key: WarrantyFilter; label: string; dot: string }[] = [
   { key: 'company', label: 'Company', dot: 'bg-accent' },
   { key: 'shop', label: 'Shop', dot: 'bg-shop-dot' },
-  { key: 'unstated', label: 'Not stated', dot: 'shadow-[inset_0_0_0_2px_#69707F]' },
+  { key: 'unstated', label: 'Not stated', dot: 'shadow-[inset_0_0_0_2px_var(--color-ink-3)]' },
 ]
 
 /** Apple's own warranty files under Company (decisions, 2026-10-25). */
@@ -63,7 +63,7 @@ function Chip({ on, label, onChange }: { on: boolean; label: string; onChange: (
   return (
     <label
       className={`inline-flex h-10 cursor-pointer items-center rounded-full px-3.5 text-[14px] font-semibold has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-accent ${
-        on ? 'bg-ink text-white' : 'chip edge-strong'
+        on ? 'bg-ink text-paper' : 'chip edge-strong'
       }`}
     >
       <input type="checkbox" checked={on} onChange={onChange} className="sr-only" />
@@ -209,7 +209,7 @@ export function BrandList({ rows, shops }: { rows: BrandRow[]; shops: string[] }
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as Sort)}
-              className="h-10 rounded-xl border border-line-strong bg-white px-3 text-[14px] text-ink"
+              className="h-10 rounded-xl border border-line-strong bg-card px-3 text-[14px] text-ink"
             >
               <option value="low">Price: low to high</option>
               <option value="high">Price: high to low</option>
@@ -219,7 +219,7 @@ export function BrandList({ rows, shops }: { rows: BrandRow[]; shops: string[] }
         </div>
 
         {shown.length === 0 ? (
-          <div className="flex flex-col items-start gap-3 rounded-3xl bg-panel px-6 py-5 text-[15px] text-ink-2">
+          <div className="flex flex-col items-start gap-3 rounded-[28px] bg-panel px-6 py-5 text-[15px] text-ink-2">
             No phone matches these filters.
             <button type="button" onClick={reset} className="cursor-pointer font-semibold text-accent">
               Clear filters
@@ -229,8 +229,10 @@ export function BrandList({ rows, shops }: { rows: BrandRow[]; shops: string[] }
           <ul className="m-0 flex list-none flex-wrap gap-4 p-0">
             {shown.map((p) => (
               <li key={p.row.phoneId} className="flex min-w-0 flex-[1_1_260px]">
-                <Link href={p.row.href} className="lift edge flex w-full flex-col gap-2.5 rounded-3xl p-[22px]">
-                  <span className="text-[17px] font-semibold">{p.row.model}</span>
+                <Link href={p.row.href} className="lift edge-card flex w-full flex-col gap-2.5 rounded-[28px] bg-card p-[22px]">
+                  <ViewTransition name={`phone-${p.row.phoneId}`} share="morph" default="none">
+                    <span className="text-[17px] font-semibold">{p.row.model}</span>
+                  </ViewTransition>
                   <span className="flex flex-wrap gap-1.5">
                     {configLabel(p.row)
                       .split(' · ')
@@ -241,7 +243,7 @@ export function BrandList({ rows, shops }: { rows: BrandRow[]; shops: string[] }
                       ))}
                   </span>
                   <span className="mt-1 flex items-baseline gap-2">
-                    <span className={`font-display text-[24px] font-extrabold tracking-[-0.03em] ${p.standing.kind === 'stock' ? '' : 'text-ink-3'}`}>
+                    <span className={`font-display text-[24px] font-bold tracking-[-0.03em] ${p.standing.kind === 'stock' ? '' : 'text-ink-3'}`}>
                       {rupees(p.price)}
                     </span>
                     <span className="text-[14px] text-ink-3">

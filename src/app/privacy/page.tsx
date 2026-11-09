@@ -36,7 +36,7 @@ export default function PrivacyPage() {
         </h1>
         <p className="m-0 mt-3 text-[14px] text-ink-3">Last updated 2 November 2026</p>
 
-        <div className="rise mt-8 flex flex-col gap-5 rounded-3xl bg-panel p-6 sm:p-8">
+        <div className="rise mt-8 flex flex-col gap-5 rounded-[28px] bg-panel p-6 sm:p-8">
           <p className={p}>
             {SITE_NAME} compares phone prices across Sri Lankan shops. You don’t need an account, and
             we never ask for your name, email or phone number.

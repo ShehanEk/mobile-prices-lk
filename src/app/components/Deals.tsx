@@ -14,7 +14,7 @@ function Saving({ deal }: { deal: DealItem }) {
   )
 }
 
-/** `inks` maps a brand name to its ink colour, from `brandStyle` on the server. */
+/** `inks` maps a brand name to its ink colour, from `brandVars` on the server. */
 export function DealsList({ deals, inks }: { deals: DealItem[]; inks: Record<string, string> }) {
   const [brand, setBrand] = useState<string | null>(null)
   const counts = new Map<string, number>()
@@ -22,7 +22,7 @@ export function DealsList({ deals, inks }: { deals: DealItem[]; inks: Record<str
   const shown = brand ? deals.filter((d) => d.brand === brand) : deals
 
   const chip = (on: boolean) =>
-    `inline-flex h-10 cursor-pointer items-center rounded-full px-4 text-[14px] font-semibold ${on ? 'bg-ink text-white' : 'chip edge-strong'}`
+    `inline-flex h-10 cursor-pointer items-center rounded-full px-4 text-[14px] font-semibold ${on ? 'bg-ink text-paper' : 'chip edge-strong'}`
 
   return (
     <div className="flex flex-col gap-5">
@@ -39,7 +39,7 @@ export function DealsList({ deals, inks }: { deals: DealItem[]; inks: Record<str
         </div>
       )}
 
-      <section aria-labelledby="drops-count" className="edge overflow-hidden rounded-3xl">
+      <section aria-labelledby="drops-count" className="edge-card overflow-hidden rounded-[28px] bg-card">
         <div className="flex items-center justify-between gap-2.5 border-b border-line px-5 py-3.5">
           <h2 id="drops-count" aria-live="polite" className="m-0 text-[15px] font-semibold">
             {shown.length} {shown.length === 1 ? 'price drop' : 'price drops'} today
@@ -65,7 +65,7 @@ export function DealsList({ deals, inks }: { deals: DealItem[]; inks: Record<str
                   </span>
                 </span>
                 <span className="flex flex-col gap-0.5 sm:ml-auto sm:items-end sm:text-right">
-                  <span className="whitespace-nowrap font-display text-[22px] font-extrabold tracking-[-0.03em]">{rupees(d.priceLkr)}</span>
+                  <span className="whitespace-nowrap font-display text-[22px] font-bold tracking-[-0.03em]">{rupees(d.priceLkr)}</span>
                   <span className="text-[13px] text-ink-2">
                     at {d.shop} · usually <span className="line-through">{rupees(d.usualLkr)}</span>
                   </span>

@@ -13,9 +13,9 @@ export function VideoReviews({ reviews }: { reviews: PhoneReview[] }) {
       </h2>
       <div className="grid grid-cols-[repeat(auto-fill,minmax(min(320px,100%),1fr))] gap-3 sm:gap-4">
         {reviews.map((r) => (
-          <div key={r.videoId} className="edge flex min-w-0 flex-col overflow-hidden rounded-[20px] sm:rounded-3xl">
+          <div key={r.videoId} className="edge-card flex min-w-0 flex-col rounded-[26px] bg-card p-1.5 sm:rounded-[28px] sm:p-2">
             <ReviewPlayer videoId={r.videoId} title={r.title} />
-            <div className="flex flex-col gap-1 px-4 pb-4 pt-3.5 sm:px-5 sm:pb-5 sm:pt-4">
+            <div className="flex flex-col gap-1 px-3 pb-2.5 pt-3 sm:px-3 sm:pb-3 sm:pt-3.5">
               <span className="text-[16px] font-semibold leading-[1.3] sm:text-[17px]">{r.title}</span>
               <span className="text-[13px] text-ink-2 sm:text-[14px]">{r.channel}</span>
             </div>
