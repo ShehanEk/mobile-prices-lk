@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { ViewTransition } from 'react'
 
 import { OfferList } from '@/app/components/OfferList'
 import { PriceChart } from '@/app/components/PriceChart'
@@ -112,11 +113,14 @@ export default async function PhonePage({ params }: Params) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
-      <SiteHeader current="brands" />
+      <SiteHeader current="brands" back={{ href: `/${brand}`, label: phone.brand }} />
 
-      <main className="mx-auto max-w-[1200px] px-4 pb-8 pt-4 sm:px-6 sm:pb-20 sm:pt-7">
-        <nav aria-label="Breadcrumb" className="mb-6 hidden text-[14px] text-ink-3 sm:block">
-          <Link href={`/${brand}`} className="text-ink-3">
+      <main className="mx-auto max-w-[1200px] px-4 pb-8 pt-5 sm:px-6 sm:pb-20 sm:pt-9">
+        <nav aria-label="Breadcrumb" className="glass mb-7 hidden h-9 items-center gap-1.5 rounded-full pl-2.5 pr-4 text-[14px] font-medium text-ink-3 sm:inline-flex">
+          <svg aria-hidden width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M15 5l-7 7 7 7" />
+          </svg>
+          <Link href={`/${brand}`} className="text-ink-2">
             {phone.brand}
           </Link>{' '}
           <span aria-hidden>/</span> {phone.model}
@@ -124,22 +128,25 @@ export default async function PhonePage({ params }: Params) {
 
         <section className="rise flex flex-col gap-5 sm:gap-7">
           <div className="pt-2 sm:pt-0">
-            <h1 className="m-0 font-display text-[48px] font-extrabold leading-[0.92] tracking-[-0.05em] sm:text-[clamp(40px,5.6vw,72px)] sm:font-bold">
-              {name}
-            </h1>
+            <ViewTransition name={`phone-${phone.phoneId}`} share="morph" default="none">
+              <h1 className="m-0 font-display text-[44px] font-bold leading-[0.98] tracking-[-0.045em] sm:text-[clamp(40px,5.6vw,72px)]">
+                {name}
+              </h1>
+            </ViewTransition>
             <p className="m-0 mt-2.5 text-[15px] text-ink-2 sm:mt-3.5 sm:text-[17px]">{rangeLine}</p>
           </div>
 
           <div role="group" aria-label="Memory and storage" className="flex flex-col gap-2.5">
             <span className="hidden text-[13px] font-semibold uppercase tracking-[0.06em] text-ink-3 sm:block">Memory and storage</span>
-            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
+            <div className="-mx-4 overflow-x-auto px-4 py-1 [scrollbar-width:none] sm:mx-0 sm:px-0">
+              <div className="glass inline-flex gap-0.5 whitespace-nowrap rounded-full p-1">
               {configs.map((c) =>
                 c.phoneId === phone.phoneId ? (
                   <Link
                     key={c.phoneId}
                     href={`/${brand}/${c.phoneId}`}
                     aria-current="page"
-                    className="inline-flex h-11 flex-none items-center rounded-full bg-ink px-4 text-[15px] font-semibold text-white sm:px-[18px]"
+                    className="inline-flex h-11 flex-none items-center rounded-full bg-[var(--segment)] px-4 text-[15px] font-semibold text-ink shadow-[0_2px_8px_rgb(0_0_0/12%),inset_0_0_0_0.5px_var(--color-line)] sm:px-5"
                   >
                     {configLabel(c)}
                   </Link>
@@ -147,12 +154,13 @@ export default async function PhonePage({ params }: Params) {
                   <Link
                     key={c.phoneId}
                     href={`/${brand}/${c.phoneId}`}
-                    className="chip edge-strong inline-flex h-11 flex-none items-center rounded-full px-4 text-[15px] font-semibold sm:px-[18px]"
+                    className="chip inline-flex h-11 flex-none items-center rounded-full px-4 text-[15px] font-medium text-ink-2 sm:px-5"
                   >
                     {configLabel(c)}
                   </Link>
                 ),
               )}
+              </div>
             </div>
           </div>
 
@@ -168,7 +176,7 @@ export default async function PhonePage({ params }: Params) {
           <SpecsBlock brand={phone.brand} model={phone.model} specs={specs[phone.model] ?? null} />
         </section>
 
-        <div className="mt-5 flex flex-col gap-2.5 rounded-3xl bg-panel p-5 sm:hidden">
+        <div className="mt-4 flex flex-col gap-2.5 rounded-[28px] bg-panel p-5 sm:hidden">
           <span className="font-display text-[20px] font-bold tracking-[-0.02em]">Why prices differ</span>
           <span className="text-[15px] leading-normal text-ink-2">
             {phone.brand === 'Apple'

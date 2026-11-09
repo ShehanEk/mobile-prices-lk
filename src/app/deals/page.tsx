@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { DealsList } from '../components/Deals'
 import { SiteFooter, SiteHeader } from '../components/SiteChrome'
 import { toDealItems } from '@/lib/deals'
-import { SITE_NAME, brandStyle, canonical } from '@/lib/site'
+import { SITE_NAME, brandVars, canonical } from '@/lib/site'
 import { loadDeals } from '@/queries/phones'
 
 /** Phones below their usual price. Rebuilt with the catalogue, after each nightly clear. */
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
 
 export default async function DealsPage() {
   const deals = toDealItems(await loadDeals())
-  const inks = Object.fromEntries([...new Set(deals.map((d) => d.brand))].map((b) => [b, brandStyle(b).ink]))
+  const inks = Object.fromEntries([...new Set(deals.map((d) => d.brand))].map((b) => [b, brandVars(b).ink]))
 
   return (
     <>
@@ -44,7 +44,7 @@ export default async function DealsPage() {
           {deals.length > 0 ? (
             <DealsList deals={deals} inks={inks} />
           ) : (
-            <p className="edge-strong m-0 rounded-3xl px-6 py-5 text-[15px] leading-relaxed text-ink-2">
+            <p className="edge-strong m-0 rounded-[28px] px-6 py-5 text-[15px] leading-relaxed text-ink-2">
               No phone is more than 5% below its usual price today. Prices are checked every night, so look again tomorrow,
               or{' '}
               <Link href="/#brands" className="text-accent underline underline-offset-2">

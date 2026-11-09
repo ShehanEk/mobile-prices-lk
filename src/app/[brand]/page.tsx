@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { ViewTransition } from 'react'
 
 import { BrandList, type BrandRow } from '@/app/components/BrandList'
 import { SiteFooter, SiteHeader } from '@/app/components/SiteChrome'
 import { rupees } from '@/lib/prices'
-import { BRAND_SLUGS, SITE_NAME, TRACKED_SHOPS, brandFromSlug, brandStyle, canonical, phoneName } from '@/lib/site'
+import { BRAND_SLUGS, SITE_NAME, TRACKED_SHOPS, brandFromSlug, brandVars, canonical, phoneName } from '@/lib/site'
 import { loadBrand, loadDirectory } from '@/queries/phones'
 
 /**
@@ -51,7 +52,7 @@ export default async function BrandPage({ params }: Params) {
 
   const directory = await loadDirectory()
   const phones = directory[slug]
-  const style = brandStyle(brand)
+  const style = brandVars(brand)
   const brands = BRAND_SLUGS.filter((s) => directory[s].length > 0)
   const listed = new Set(phones.flatMap((p) => p.offers.map((o) => o.shop)))
   const shops = TRACKED_SHOPS.filter((s) => listed.has(s))
@@ -102,19 +103,20 @@ export default async function BrandPage({ params }: Params) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       <SiteHeader current="brands" />
 
+      <ViewTransition name={`brand-${slug}`} share="morph" default="none">
       <section className="overflow-hidden" style={{ background: style.tint, color: style.ink }}>
         <div className="mx-auto max-w-[1200px] px-4 pt-8 sm:px-6 sm:pt-12">
           <nav aria-label="Brands" className="-mx-4 mb-7 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:mb-9 sm:flex-wrap sm:px-0">
             {brands.map((s) =>
               s === slug ? (
-                <Link key={s} href={`/${s}`} aria-current="page" className="inline-flex h-10 flex-none items-center rounded-full bg-accent px-4 text-[14px] font-bold text-white">
+                <Link key={s} href={`/${s}`} aria-current="page" className="inline-flex h-10 flex-none items-center rounded-full bg-accent px-4 text-[14px] font-bold text-on-accent">
                   {brandFromSlug(s)}
                 </Link>
               ) : (
                 <Link
                   key={s}
                   href={`/${s}`}
-                  className="chip inline-flex h-10 flex-none items-center rounded-full bg-white px-4 text-[14px] font-semibold"
+                  className="chip inline-flex h-10 flex-none items-center rounded-full bg-card px-4 text-[14px] font-semibold"
                   style={{ color: style.ink }}
                 >
                   {brandFromSlug(s)}
@@ -125,6 +127,7 @@ export default async function BrandPage({ params }: Params) {
           <h1 className="m-0 pb-10 font-display text-[clamp(44px,6vw,80px)] font-bold leading-none tracking-[-0.04em]">{brand}</h1>
         </div>
       </section>
+      </ViewTransition>
 
       <main className="mx-auto max-w-[1200px] px-4 pb-20 pt-8 sm:px-6 sm:pt-10">
         <BrandList rows={rows} shops={shops} />

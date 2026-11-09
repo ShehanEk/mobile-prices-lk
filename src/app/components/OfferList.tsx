@@ -19,7 +19,7 @@ const BADGE: Record<Warranty, string> = {
   // "Apple warranty" in the company colour (decisions, 2026-10-25).
   apple: 'bg-company text-company-ink',
   shop: 'bg-shop text-shop-ink',
-  unstated: 'edge-strong bg-white text-ink-3',
+  unstated: 'edge-strong text-ink-3',
 }
 
 const live = (o: Offer) => o.inStock && !o.stale
@@ -51,7 +51,7 @@ function ShopName({ shop, best }: { shop: string; best: boolean }) {
     <span className="inline-flex flex-wrap items-center gap-2">
       {shop}
       {best && (
-        <span className="inline-flex h-[22px] items-center whitespace-nowrap rounded-full bg-accent px-[9px] text-[12px] font-semibold text-white">
+        <span className="inline-flex h-[22px] items-center whitespace-nowrap rounded-full bg-accent px-[9px] text-[12px] font-semibold text-on-accent">
           Cheapest
         </span>
       )}
@@ -74,7 +74,7 @@ export function OfferList({ offers }: { offers: Offer[] }) {
           type="button"
           aria-pressed={companyOnly}
           onClick={() => setCompanyOnly((on) => !on)}
-          className="btn inline-flex h-11 cursor-pointer items-center gap-2 rounded-full bg-panel pl-1.5 pr-3 text-[13px] font-semibold text-ink sm:gap-3 sm:pl-2 sm:pr-4 sm:text-[15px]"
+          className="btn glass inline-flex h-11 cursor-pointer items-center gap-2 rounded-full pl-1.5 pr-3.5 text-[13px] font-semibold text-ink sm:h-12 sm:gap-3 sm:pl-2 sm:pr-[18px] sm:text-[15px]"
         >
           <span
             aria-hidden
@@ -83,7 +83,7 @@ export function OfferList({ offers }: { offers: Offer[] }) {
             }`}
           >
             <span
-              className={`absolute top-[3px] h-[18px] w-[18px] rounded-full bg-white transition-[left] motion-reduce:transition-none sm:h-[22px] sm:w-[22px] ${
+              className={`absolute top-[3px] h-[18px] w-[18px] rounded-full bg-white shadow-[0_2px_6px_rgb(0_0_0/20%)] transition-[left] motion-reduce:transition-none sm:h-[22px] sm:w-[22px] ${
                 companyOnly ? 'left-[15px] sm:left-[19px]' : 'left-[3px]'
               }`}
             />
@@ -94,12 +94,12 @@ export function OfferList({ offers }: { offers: Offer[] }) {
       </div>
 
       {shown.length === 0 ? (
-        <p className="m-0 rounded-3xl bg-panel px-5 py-4 text-[15px] text-ink-2">
+        <p className="m-0 rounded-[28px] bg-panel px-5 py-4 text-[15px] text-ink-2">
           No shop lists this phone with company warranty right now.
         </p>
       ) : (
         <>
-          <div className="edge hidden overflow-x-auto rounded-3xl md:block">
+          <div className="edge-card hidden overflow-x-auto rounded-[28px] bg-card md:block">
             <table className="w-full min-w-[720px] border-collapse text-[15px]">
               <thead>
                 <tr className="text-left text-[13px] uppercase tracking-[0.06em] text-ink-3">
@@ -131,7 +131,7 @@ export function OfferList({ offers }: { offers: Offer[] }) {
                       <Price offer={o} />
                     </td>
                     <td className="px-6 py-[18px] text-right">
-                      <a href={o.url} target="_blank" rel="noopener nofollow" className="go whitespace-nowrap font-semibold text-accent">
+                      <a href={o.url} target="_blank" rel="noopener nofollow" className="btn inline-flex h-9 items-center whitespace-nowrap rounded-full bg-cheapest px-3.5 font-semibold text-accent">
                         Visit shop →<span className="sr-only"> (opens {o.shop} in a new tab)</span>
                       </a>
                     </td>
@@ -148,7 +148,7 @@ export function OfferList({ offers }: { offers: Offer[] }) {
                   href={o.url}
                   target="_blank"
                   rel="noopener nofollow"
-                  className={`lift edge flex items-center gap-3 rounded-[20px] p-4 ${o === best ? 'bg-cheapest' : ''}`}
+                  className={`lift flex items-center gap-3 rounded-3xl p-4 ${o === best ? 'bg-cheapest shadow-[inset_0_0_0_1.5px_var(--color-accent)]' : 'edge-card bg-card'}`}
                 >
                   <span className="flex min-w-0 flex-1 flex-col gap-1.5">
                     <span className="text-[16px] font-semibold">

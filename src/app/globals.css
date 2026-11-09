@@ -1,54 +1,109 @@
 @import "tailwindcss";
 
 /**
- * MobilePrices.lk tokens, from the approved design canvas (docs/decisions.md,
- * 2026-10-23 "Design"). Light only: the canvas is white with pale panels.
+ * MobilePrices.lk tokens, Liquid Glass (decisions, 2026-11-09 "Liquid Glass
+ * redesign"). Light values here; dark values swap in below under
+ * prefers-color-scheme. Lines, panels and hovers are translucent ink, so they
+ * read on the pale page, on white cards and in dark mode alike.
  */
 @theme {
+  --color-paper: #f2f3f7;
+  --color-card: #ffffff;
   --color-ink: #1a1f2b;
-  --color-ink-2: #586070;
-  --color-ink-3: #69707f;
-  --color-line: #e8ebf2;
-  --color-line-soft: #edeff4;
-  --color-line-strong: #d5dae3;
-  --color-panel: #f2f4f9;
-  --color-hover: #f7f9fc;
+  --color-ink-2: #545b69;
+  --color-ink-3: #626977;
+  --color-line: rgb(26 31 43 / 9%);
+  --color-line-soft: rgb(26 31 43 / 6%);
+  --color-line-strong: rgb(26 31 43 / 17%);
+  --color-panel: rgb(26 31 43 / 5%);
+  --color-hover: rgb(26 31 43 / 3%);
   --color-accent: #3467d7;
+  --color-on-accent: #ffffff;
   --color-live: #3dba6e;
-  --color-company: #e9eeff;
+  --color-company: #e6ecff;
   --color-company-ink: #3b55c9;
   --color-shop: #fcf0dc;
   --color-shop-ink: #8c5e1a;
   --color-shop-dot: #e0a63a;
   --color-best: #e3f5ec;
   --color-best-ink: #1e7a55;
-  --color-cheapest: #f3f6fe;
-  --shadow-card: 0 8px 24px -14px rgb(35 55 110 / 22%);
+  --color-cheapest: rgb(52 103 215 / 8%);
+  --shadow-card: 0 10px 30px -14px rgb(30 45 90 / 24%);
 }
 
 @theme inline {
-  --font-sans: var(--font-geist), system-ui, sans-serif;
-  --font-display: var(--font-bricolage), sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', var(--font-inter), system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', var(--font-inter), system-ui, sans-serif;
 }
 
-/* Hairlines drawn inside the box, as the canvas does (inset shadow, no border). */
-@utility edge {
-  box-shadow: inset 0 0 0 1px var(--color-line);
-}
-@utility edge-strong {
-  box-shadow: inset 0 0 0 1px var(--color-line-strong);
-}
-@utility edge-card {
-  box-shadow: inset 0 0 0 1px var(--color-line), var(--shadow-card);
-}
-@utility edge-search {
-  box-shadow: inset 0 0 0 1px var(--color-line-strong), var(--shadow-card);
-}
-
+/*
+ * Glass, page glow and brand tints. Plain variables, not theme tokens: they
+ * have no utility of their own. Brand pairs follow `brandVars` in
+ * src/lib/site.ts (the light pairs are its TINTS, which OG images still use).
+ */
 @layer base {
+  :root {
+    color-scheme: light dark;
+    --glass: rgb(255 255 255 / 58%);
+    --glass-hi: rgb(255 255 255 / 95%);
+    --glass-edge: rgb(255 255 255 / 70%);
+    --segment: #ffffff;
+    --glow-1: rgb(52 103 215 / 22%);
+    --glow-2: rgb(61 186 110 / 16%);
+    --glow-3: rgb(224 166 58 / 16%);
+    --brand-0-tint: #eef1f5; --brand-0-ink: #1a1f2b;
+    --brand-1-tint: #e9eeff; --brand-1-ink: #3b55c9;
+    --brand-2-tint: #fdede1; --brand-2-ink: #a4511f;
+    --brand-3-tint: #f5e9fb; --brand-3-ink: #8a3ba8;
+    --brand-4-tint: #fde9e6; --brand-4-ink: #b23a30;
+    --brand-5-tint: #e3f5ec; --brand-5-ink: #1e7a55;
+    --brand-6-tint: #e1f3f8; --brand-6-ink: #1d6f86;
+    --brand-7-tint: #fcf0dc; --brand-7-ink: #8c5e1a;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --color-paper: #0a0c10;
+      --color-card: #15181e;
+      --color-ink: #f3f5f9;
+      --color-ink-2: #a9b0bd;
+      --color-ink-3: #8f97a5;
+      --color-line: rgb(255 255 255 / 9%);
+      --color-line-soft: rgb(255 255 255 / 6%);
+      --color-line-strong: rgb(255 255 255 / 17%);
+      --color-panel: rgb(255 255 255 / 7%);
+      --color-hover: rgb(255 255 255 / 4%);
+      --color-accent: #7aa2ff;
+      --color-on-accent: #0a0c10;
+      --color-company: rgb(110 151 255 / 18%);
+      --color-company-ink: #b4c6ff;
+      --color-shop: rgb(224 166 58 / 18%);
+      --color-shop-ink: #f0c77e;
+      --color-best: rgb(60 190 130 / 18%);
+      --color-best-ink: #5fd39a;
+      --color-cheapest: rgb(122 162 255 / 12%);
+      --shadow-card: 0 12px 34px -14px rgb(0 0 0 / 70%);
+      --glass: rgb(30 34 42 / 52%);
+      --glass-hi: rgb(255 255 255 / 20%);
+      --glass-edge: rgb(255 255 255 / 12%);
+      --segment: rgb(255 255 255 / 16%);
+      --glow-1: rgb(80 120 255 / 26%);
+      --glow-2: rgb(61 186 110 / 14%);
+      --glow-3: rgb(224 140 58 / 14%);
+      --brand-0-tint: rgb(255 255 255 / 10%); --brand-0-ink: #e6e9ef;
+      --brand-1-tint: rgb(91 120 255 / 20%); --brand-1-ink: #a9beff;
+      --brand-2-tint: rgb(240 130 60 / 20%); --brand-2-ink: #ffb88a;
+      --brand-3-tint: rgb(180 100 220 / 20%); --brand-3-ink: #dda8f2;
+      --brand-4-tint: rgb(230 90 80 / 20%); --brand-4-ink: #ff9e95;
+      --brand-5-tint: rgb(60 190 130 / 20%); --brand-5-ink: #7fe0b0;
+      --brand-6-tint: rgb(60 170 200 / 20%); --brand-6-ink: #86d6ea;
+      --brand-7-tint: rgb(224 166 58 / 20%); --brand-7-ink: #f0c77e;
+    }
+  }
+
   body {
     margin: 0;
-    background: #ffffff;
+    background: var(--color-paper);
     color: var(--color-ink);
     font-variant-numeric: tabular-nums;
   }
@@ -65,7 +120,39 @@
   }
 }
 
-/* Subtle motion, from the canvas. All off under prefers-reduced-motion (below). */
+/* Hairlines drawn inside the box (inset shadow, no border). */
+@utility edge {
+  box-shadow: inset 0 0 0 1px var(--color-line);
+}
+@utility edge-strong {
+  box-shadow: inset 0 0 0 1px var(--color-line-strong);
+}
+@utility edge-card {
+  box-shadow: inset 0 0 0 1px var(--color-line), var(--shadow-card);
+}
+
+/* Frosted glass for floating controls: header, tab bar, search, toggles, segments. */
+@utility glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  backdrop-filter: blur(22px) saturate(180%);
+  box-shadow: inset 0 1px 0 var(--glass-hi), inset 0 0 0 1px var(--glass-edge), var(--shadow-card);
+}
+
+/* Soft colour behind the top of every page, so the glass has something to frost. */
+@utility glow {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -1;
+  height: 760px;
+  pointer-events: none;
+  background:
+    radial-gradient(560px 420px at 15% 0%, var(--glow-1), transparent 70%),
+    radial-gradient(460px 380px at 85% 8%, var(--glow-2), transparent 70%),
+    radial-gradient(420px 340px at 50% 45%, var(--glow-3), transparent 70%);
+}
+
+/* Subtle motion. All off under prefers-reduced-motion (below). */
 @keyframes rise {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
@@ -76,7 +163,7 @@
   .lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
   .lift:hover {
     transform: translateY(-2px);
-    box-shadow: inset 0 0 0 1px var(--color-line), 0 14px 30px -16px rgb(35 55 110 / 30%) !important;
+    box-shadow: inset 0 0 0 1px var(--color-line), 0 16px 34px -16px rgb(30 45 90 / 32%) !important;
   }
   .lift:active { transform: scale(0.99); }
   .btn { transition: transform 0.15s ease, filter 0.15s ease; }
@@ -94,4 +181,67 @@
   .rise { animation: none; }
   .lift, .btn, .go, .chip, .row, a { transition: none; }
   .lift:hover, .btn:hover, .go:hover, .lift:active, .btn:active { transform: none; }
+}
+
+/* Glass needs a backdrop filter; without one, fall back to the solid card. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass { background: var(--color-card); }
+}
+
+/*
+ * Page transitions (decisions, 2026-11-09). React's <ViewTransition> drives the
+ * browser View Transitions API; without it pages swap instantly as before.
+ * - The page crossfades with a soft blur (layout.tsx, class "page").
+ * - A brand pill grows into its brand page's band; a phone's name moves into
+ *   the phone page title (class "morph").
+ * - The header and tab bar stay put while the page changes under them.
+ */
+::view-transition {
+  pointer-events: none;
+}
+::view-transition-old(.page) {
+  animation: 160ms ease-in both vt-fade reverse;
+}
+::view-transition-new(.page) {
+  animation: 240ms cubic-bezier(0.2, 0.7, 0.2, 1) 80ms both vt-fade, 360ms cubic-bezier(0.2, 0.7, 0.2, 1) both vt-rise;
+}
+::view-transition-group(.morph) {
+  animation-duration: 420ms;
+  animation-timing-function: cubic-bezier(0.3, 0.9, 0.25, 1);
+}
+::view-transition-image-pair(.morph) {
+  animation-name: vt-via-blur;
+}
+::view-transition-group(site-header),
+::view-transition-group(tab-bar) {
+  animation: none;
+  z-index: 100;
+}
+::view-transition-old(site-header),
+::view-transition-old(tab-bar) {
+  display: none;
+}
+::view-transition-new(site-header),
+::view-transition-new(tab-bar) {
+  animation: none;
+}
+@keyframes vt-fade {
+  from { opacity: 0; filter: blur(4px); }
+  to { opacity: 1; filter: blur(0); }
+}
+@keyframes vt-rise {
+  from { translate: 0 12px; }
+  to { translate: 0 0; }
+}
+@keyframes vt-via-blur {
+  30% { filter: blur(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*),
+  ::view-transition-image-pair(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
 }

@@ -13,7 +13,7 @@ const TONE: Record<ShopNote['tone'], { dot: string; ink: string }> = {
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <span className="flex flex-col gap-0.5">
-      <span className="font-display text-[22px] font-extrabold tracking-[-0.03em] sm:text-[24px]">{value}</span>
+      <span className="font-display text-[22px] font-bold tracking-[-0.03em] sm:text-[24px]">{value}</span>
       <span className="text-[13px] text-ink-2">{label}</span>
     </span>
   )
@@ -39,7 +39,7 @@ export function ShopProfiles({ stats }: { stats: Record<string, ShopStats> }) {
           const profile = SHOP_PROFILES[shop]
           const { phones, inStockPct, cheapestPct } = stats[shop]
           return (
-            <li key={shop} className="edge-card flex w-[300px] flex-none snap-start flex-col gap-3 rounded-3xl bg-white p-[18px] sm:w-[360px] sm:gap-4 sm:p-[22px]">
+            <li key={shop} className="edge-card flex w-[300px] flex-none snap-start flex-col gap-3 rounded-[28px] bg-card p-[18px] sm:w-[360px] sm:gap-4 sm:p-[22px]">
               <div className="flex items-center justify-between gap-3">
                 <h3 className="m-0 min-w-0 font-display text-[18px] font-bold tracking-[-0.02em] [overflow-wrap:anywhere] sm:text-[20px]">{shop}</h3>
                 <a href={profile.website} target="_blank" rel="noopener" className={LINK}>

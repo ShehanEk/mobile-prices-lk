@@ -279,3 +279,22 @@ in the repo or shown to AI.
 UI is designed on a Claude Design canvas and approved before coding.
 Decisions go here as dated entries. No AI attribution in commits. No secrets
 in the repo.
+
+## 2026-11-09 — Liquid Glass redesign, with dark mode
+
+Approved on the [design canvas](https://claude.ai/artifact/TkAhRbFu3Sp26Y5NGj3DsG)
+(home and phone page, desktop and 390px, light and dark). Replaces the look of
+"Design: soft PCPrice.lk colours"; content, data, metadata and JSON-LD are
+unchanged.
+
+- **Glass:** floating controls are frosted (`glass` in `globals.css`): the
+  sticky capsule header, search, the warranty switch, breadcrumb and the
+  memory and storage segments. Cards are solid, with 28px concentric corners.
+- **Dark mode:** follows the device (`prefers-color-scheme`). Tokens and brand
+  tints swap in `globals.css`; pages read brand tints through `brandVars`. OG
+  images keep the light hex pairs (`brandStyle`) and their own fonts.
+- **Type:** the system face (San Francisco on Apple devices), Inter elsewhere.
+  Bricolage Grotesque and Geist leave the pages.
+- **Mobile nav:** below 640px a frosted tab bar at the bottom (Home, Brands,
+  Price drops) with a round Search button replaces the menu. Phone pages show
+  a back link to their brand in place of the wordmark.

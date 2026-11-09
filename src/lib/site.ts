@@ -58,9 +58,18 @@ const TINTS: [tint: string, ink: string][] = [
   ['#FCF0DC', '#8C5E1A'], // realme
 ]
 
+const tintIndex = (brand: string) => Math.max(0, BRANDS.indexOf(brand)) % TINTS.length
+
+/** The hex pair, for OG images (no CSS variables there). */
 export function brandStyle(brand: string): { tint: string; ink: string } {
-  const [tint, ink] = TINTS[Math.max(0, BRANDS.indexOf(brand)) % TINTS.length]
+  const [tint, ink] = TINTS[tintIndex(brand)]
   return { tint, ink }
+}
+
+/** The same pair as CSS variables, for pages: globals.css swaps them in dark mode. */
+export function brandVars(brand: string): { tint: string; ink: string } {
+  const i = tintIndex(brand)
+  return { tint: `var(--brand-${i}-tint)`, ink: `var(--brand-${i}-ink)` }
 }
 
 /** The home page's "Latest flagships", in card order; edited by hand when new flagships launch. */

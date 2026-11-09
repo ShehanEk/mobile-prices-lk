@@ -1,21 +1,16 @@
 import type { Metadata, Viewport } from 'next'
-import type { ReactNode } from 'react'
-import { Bricolage_Grotesque, Geist } from 'next/font/google'
+import { ViewTransition, type ReactNode } from 'react'
+import { Inter } from 'next/font/google'
 import './globals.css'
 
 import { SITE_NAME, SITE_URL } from '@/lib/site'
 import { Analytics } from './components/Analytics'
 
-/** Headings, prices and the wordmark. Variable, with the optical-size axis the canvas uses. */
-const display = Bricolage_Grotesque({
-  subsets: ['latin'],
-  variable: '--font-bricolage',
-  display: 'swap',
-  axes: ['opsz'],
-})
-
-/** Running text. */
-const sans = Geist({ subsets: ['latin'], variable: '--font-geist', display: 'swap' })
+/**
+ * The system face leads (San Francisco on Apple devices, per the Liquid Glass
+ * design); Inter stands in elsewhere. See --font-sans in globals.css.
+ */
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' })
 
 /** Pages stay cached until /api/revalidate clears `catalog`, after GitHub's nightly normalize run. */
 export const revalidate = false
@@ -40,13 +35,20 @@ export const metadata: Metadata = {
   category: 'shopping',
 }
 
-export const viewport: Viewport = { themeColor: '#ffffff' }
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f2f3f7' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0c10' },
+  ],
+}
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en-LK" className={`${display.variable} ${sans.variable} h-full`}>
-      <body className="min-h-full font-sans antialiased">
-        {children}
+    <html lang="en-LK" className={`${inter.variable} h-full`}>
+      <body className="relative min-h-full font-sans antialiased">
+        <div aria-hidden className="glow" />
+        {/* Every navigation crossfades the page; named parts morph (globals.css, "Page transitions"). */}
+        <ViewTransition default="page">{children}</ViewTransition>
         <Analytics />
       </body>
     </html>
