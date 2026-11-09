@@ -235,6 +235,12 @@ const NOISE: RegExp[] = [
   /\bfoldable\b/gi,
   // "CMF by Nothing Phone 1" is the "CMF Phone 1" other shops list.
   /\bby\s+nothing\b/gi,
+  // "Samsung Galaxy A10 + Full Glue Tempered Glass + Back Cover – Bundle Pack":
+  // the phone with extras, like "With Buds". A "+" with no "bundle" stays.
+  /\s\+\s.*\bbundle(?:\s+pack)?\b/gi,
+  // "Xiaomi Black Shark 2 Gaming Phone with Left Game Controller"
+  /\bgaming\s+phone\b/gi,
+  /\bwith\s+.*\bcontroller\b/gi,
 ]
 
 /**

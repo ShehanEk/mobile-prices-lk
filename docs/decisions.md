@@ -243,6 +243,12 @@ PCPrice.lk because it returns about 5 reviews per place.
 The hero board is gone. It listed the four phones the most shops stock, so its
 title promised something it did not show. The search leads the hero alone.
 
+## 2026-11-09 — A phone bundle is the phone
+
+"Galaxy A10 + Full Glue Tempered Glass + Back Cover – Bundle Pack" and "Black
+Shark 2 Gaming Phone with Left Game Controller" count as Galaxy A10 and Black
+Shark 2, as "With Buds" already did. Before, each became a phone page of its own.
+
 ## 2026-10-25 — GSMArena specs: found through brand lists, run from the home PC
 
 GSMArena's search answers our honest bot user agent with a Cloudflare
