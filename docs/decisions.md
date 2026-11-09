@@ -243,11 +243,19 @@ PCPrice.lk because it returns about 5 reviews per place.
 The hero board is gone. It listed the four phones the most shops stock, so its
 title promised something it did not show. The search leads the hero alone.
 
+<<<<<<< HEAD
 ## 2026-11-09 — A phone bundle is the phone
 
 "Galaxy A10 + Full Glue Tempered Glass + Back Cover – Bundle Pack" and "Black
 Shark 2 Gaming Phone with Left Game Controller" count as Galaxy A10 and Black
 Shark 2, as "With Buds" already did. Before, each became a phone page of its own.
+=======
+## 2026-11-09 — Phone page title is the full name
+
+The phone page heading and its share image read "Honor 400", not a small
+"Honor" label over "400", as GSMArena does. Models are still stored without
+the brand, since matching relies on that; lists keep the brand beside the model.
+>>>>>>> origin/main
 
 ## 2026-10-25 — GSMArena specs: found through brand lists, run from the home PC
 
