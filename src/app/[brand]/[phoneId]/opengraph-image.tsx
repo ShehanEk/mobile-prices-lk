@@ -1,5 +1,6 @@
-import { DISPLAY, INK, LABEL, MUTED, BLUE, OG_SIZE, TINT_BEST, TINT_COMPANY, ogImage } from '@/lib/og'
+import { DISPLAY, INK, LABEL, MUTED, OG_SIZE, TINT_BEST, TINT_COMPANY, ogImage } from '@/lib/og'
 import { configLabel, rupees, type Offer } from '@/lib/prices'
+import { phoneName } from '@/lib/site'
 import { findPhone } from '@/queries/phones'
 
 /**
@@ -34,16 +35,14 @@ export default async function Image({ params }: { params: Promise<{ brand: strin
   const { brand, phoneId } = await params
   const phone = await findPhone(brand, phoneId)
   if (!phone) return new Response('Not found', { status: 404 })
+  const name = phoneName(phone)
 
   return ogImage({
     body: (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 26 }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <span style={{ fontSize: 26, fontWeight: 600, color: BLUE }}>{phone.brand}</span>
-          <span style={{ fontFamily: DISPLAY, fontWeight: 700, fontSize: phone.model.length > 22 ? 60 : 76, lineHeight: 0.95, letterSpacing: '-0.045em' }}>
-            {phone.model}
-          </span>
-        </div>
+        <span style={{ fontFamily: DISPLAY, fontWeight: 700, fontSize: name.length > 22 ? 60 : 76, lineHeight: 0.95, letterSpacing: '-0.045em' }}>
+          {name}
+        </span>
         <div style={{ display: 'flex', gap: 20 }}>
           <Headline title="Cheapest overall" offer={phone.overall} tint={TINT_BEST} />
           <Headline title="With company warranty" offer={phone.company} tint={TINT_COMPANY} />

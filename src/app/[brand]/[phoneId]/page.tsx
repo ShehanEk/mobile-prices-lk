@@ -124,9 +124,8 @@ export default async function PhonePage({ params }: Params) {
 
         <section className="rise flex flex-col gap-5 sm:gap-7">
           <div className="pt-2 sm:pt-0">
-            <p className="m-0 text-[14px] font-semibold text-accent sm:mb-2 sm:text-[15px]">{phone.brand}</p>
-            <h1 className="m-0 mt-1 font-display text-[48px] font-extrabold leading-[0.92] tracking-[-0.05em] sm:mt-0 sm:text-[clamp(40px,5.6vw,72px)] sm:font-bold">
-              {phone.model}
+            <h1 className="m-0 font-display text-[48px] font-extrabold leading-[0.92] tracking-[-0.05em] sm:text-[clamp(40px,5.6vw,72px)] sm:font-bold">
+              {name}
             </h1>
             <p className="m-0 mt-2.5 text-[15px] text-ink-2 sm:mt-3.5 sm:text-[17px]">{rangeLine}</p>
           </div>
