@@ -308,3 +308,22 @@ glass. `next/og` has no backdrop blur, so glass is a white gradient, a bright
 edge and a soft shadow (`GLASS` in `src/lib/og.tsx`). Light only. Inter
 replaces Bricolage Grotesque and Geist; the favicon keeps its Bricolage "m".
 Content is unchanged.
+
+## 2026-11-11 — SEO fixes before Search Console
+
+From the SEO audit, approved by Shehan.
+
+- **Product JSON-LD only with a current price.** A phone page whose prices
+  are all stale carries just its breadcrumb: Google rejects a Product without
+  offers. No `image`: the share image renders on demand and robots keeps
+  Googlebot off it. Built in `src/lib/jsonld.ts`.
+- **WebSite and Organization JSON-LD on home,** so Google shows
+  "MobilePrices.lk" as the site name. Logo is `/apple-icon` (180px; Google
+  needs at least 112px).
+- **Brand page heading reads "Samsung phone prices in Sri Lanka",** the brand
+  still large, with the meta description as the line under it.
+- **Production on any `*.vercel.app` host redirects (308) to
+  NEXT_PUBLIC_SITE_URL,** once that is set. Preview deployments are untouched.
+- **One page per memory and storage configuration stays.** Revisit if Search
+  Console reports many "Duplicate, Google chose different canonical" pages
+  four weeks after launch.

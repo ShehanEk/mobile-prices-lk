@@ -5,6 +5,7 @@ import { SearchBox } from './components/SearchBox'
 import { ShopProfiles } from './components/ShopProfiles'
 import { SiteFooter, SiteHeader } from './components/SiteChrome'
 import { toDealItems, type DealItem } from '@/lib/deals'
+import { siteJsonLd } from '@/lib/jsonld'
 import { flagshipCards, rupees, type FlagshipCard } from '@/lib/prices'
 import { shopStats } from '@/lib/shop-stats'
 import { BRAND_SLUGS, FLAGSHIPS, TRACKED_SHOPS, brandFromSlug, brandVars } from '@/lib/site'
@@ -67,6 +68,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd()).replace(/</g, '\\u003c') }} />
       <SiteHeader current="home" />
 
       <section className="mx-auto max-w-[1200px] px-5 pb-12 pt-10 sm:px-6 sm:pb-20 sm:pt-[88px]">

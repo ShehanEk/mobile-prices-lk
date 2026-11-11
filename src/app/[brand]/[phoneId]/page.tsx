@@ -8,6 +8,7 @@ import { PriceChart } from '@/app/components/PriceChart'
 import { SiteFooter, SiteHeader } from '@/app/components/SiteChrome'
 import { SpecsBlock } from '@/app/components/SpecsBlock'
 import { VideoReviews } from '@/app/components/VideoReviews'
+import { productJsonLd } from '@/lib/jsonld'
 import { checkedLabel, configLabel, phoneDescription, priceRange, rupees } from '@/lib/prices'
 import { SITE_NAME, canonical, phoneName } from '@/lib/site'
 import { findPhone, loadBrand, loadDirectory, loadPhoneHistory, loadReviews, loadSpecs } from '@/queries/phones'
@@ -64,7 +65,7 @@ export default async function PhonePage({ params }: Params) {
   const range = priceRange(phone.offers)
   const name = phoneName(phone)
   const path = `/${brand}/${phone.phoneId}`
-  const current = phone.offers.filter((o) => !o.stale)
+  const product = productJsonLd(phone, `${name} ${configLabel(phone)}`, path)
 
   const rangeLine = `${phone.shops} ${phone.shops === 1 ? 'shop' : 'shops'} · ${
     !range ? 'no price confirmed this week' : range.low === range.high ? rupees(range.low) : `${rupees(range.low)} to ${rupees(range.high)}`
@@ -81,32 +82,7 @@ export default async function PhonePage({ params }: Params) {
           { '@type': 'ListItem', position: 3, name, item: canonical(path) },
         ],
       },
-      {
-        '@type': 'Product',
-        name: `${name} ${configLabel(phone)}`,
-        url: canonical(path),
-        image: canonical(`${path}/opengraph-image`),
-        category: 'Mobile phone',
-        brand: { '@type': 'Brand', name: phone.brand },
-        ...(range && {
-          offers: {
-            '@type': 'AggregateOffer',
-            priceCurrency: 'LKR',
-            lowPrice: range.low,
-            highPrice: range.high,
-            offerCount: current.length,
-            availability: phone.inStockShops > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-            offers: current.map((o) => ({
-              '@type': 'Offer',
-              price: o.priceLkr,
-              priceCurrency: 'LKR',
-              url: o.url,
-              availability: o.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-              seller: { '@type': 'Organization', name: o.shop },
-            })),
-          },
-        }),
-      },
+      ...(product ? [product] : []),
     ],
   }
 
