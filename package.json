@@ -12,7 +12,7 @@
     "specs": "tsx --env-file-if-exists=.env.local scripts/specs.ts",
     "reviews": "tsx --env-file-if-exists=.env.local scripts/reviews.ts",
     "favicon": "tsx scripts/make-favicon.ts",
-    "test": "tsx --test src/scrapers/woocommerce.test.ts src/normalize/warranty.test.ts src/normalize/phone.test.ts src/pipeline/best-row.test.ts src/pipeline/superseded.test.ts src/pipeline/model-fallback.test.ts src/normalize/ai.test.ts src/lib/prices.test.ts src/lib/deals.test.ts src/lib/shop-stats.test.ts src/specs/gsmarena.test.ts src/pipeline/specs.test.ts src/app/components/SpecsBlock.test.tsx src/app/components/OfferList.test.tsx src/reviews/youtube.test.ts src/app/components/VideoReviews.test.tsx src/app/components/ShopProfiles.test.tsx",
+    "test": "tsx --test src/lib/jsonld.test.ts src/scrapers/woocommerce.test.ts src/normalize/warranty.test.ts src/normalize/phone.test.ts src/pipeline/best-row.test.ts src/pipeline/superseded.test.ts src/pipeline/model-fallback.test.ts src/normalize/ai.test.ts src/lib/prices.test.ts src/lib/deals.test.ts src/lib/shop-stats.test.ts src/specs/gsmarena.test.ts src/pipeline/specs.test.ts src/app/components/SpecsBlock.test.tsx src/app/components/OfferList.test.tsx src/reviews/youtube.test.ts src/app/components/VideoReviews.test.tsx src/app/components/ShopProfiles.test.tsx",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"

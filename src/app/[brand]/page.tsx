@@ -5,7 +5,7 @@ import { ViewTransition } from 'react'
 
 import { BrandList, type BrandRow } from '@/app/components/BrandList'
 import { SiteFooter, SiteHeader } from '@/app/components/SiteChrome'
-import { rupees } from '@/lib/prices'
+import { rupees, type PhoneSummary } from '@/lib/prices'
 import { BRAND_SLUGS, SITE_NAME, TRACKED_SHOPS, brandFromSlug, brandVars, canonical, phoneName } from '@/lib/site'
 import { loadBrand, loadDirectory } from '@/queries/phones'
 
@@ -24,18 +24,22 @@ export async function generateStaticParams() {
   return BRAND_SLUGS.filter((s) => directory[s].length > 0).map((brand) => ({ brand }))
 }
 
+/** The meta description, also the line under the page heading. */
+function brandDescription(brand: string, phones: PhoneSummary[]): string {
+  const inStock = phones.filter((p) => p.overall?.inStock)
+  const from = inStock.length ? Math.min(...inStock.map((p) => p.overall!.priceLkr)) : null
+  return from !== null
+    ? `Compare ${inStock.length} ${brand} phones in stock in Sri Lanka, from ${rupees(from)}. Every price labelled company or shop warranty, updated daily.`
+    : `${brand} phone prices from Sri Lankan shops, updated daily.`
+}
+
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const slug = (await params).brand
   const brand = brandFromSlug(slug)
   if (!brand) return {}
 
-  const inStock = (await loadBrand(slug)).filter((p) => p.overall?.inStock)
-  const from = inStock.length ? Math.min(...inStock.map((p) => p.overall!.priceLkr)) : null
   const title = `${brand} phone prices in Sri Lanka`
-  const description =
-    from !== null
-      ? `Compare ${inStock.length} ${brand} phones in stock in Sri Lanka, from ${rupees(from)}. Every price labelled company or shop warranty, updated daily.`
-      : `${brand} phone prices from Sri Lankan shops, updated daily.`
+  const description = brandDescription(brand, await loadBrand(slug))
 
   return {
     title,
@@ -124,7 +128,13 @@ export default async function BrandPage({ params }: Params) {
               ),
             )}
           </nav>
-          <h1 className="m-0 pb-10 font-display text-[clamp(44px,6vw,80px)] font-bold leading-none tracking-[-0.04em]">{brand}</h1>
+          <div className="flex flex-col gap-3 pb-10">
+            <h1 className="m-0 flex flex-col gap-2 font-display font-bold">
+              <span className="text-[clamp(44px,6vw,80px)] leading-none tracking-[-0.04em]">{brand}</span>
+              <span className="text-[20px] leading-tight tracking-[-0.02em] sm:text-[24px]">phone prices in Sri Lanka</span>
+            </h1>
+            <p className="m-0 max-w-[64ch] text-[15px] leading-normal opacity-80 sm:text-[16px]">{brandDescription(brand, phones)}</p>
+          </div>
         </div>
       </section>
       </ViewTransition>
